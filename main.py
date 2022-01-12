@@ -59,7 +59,12 @@ def sending_notifications():
 
             if config.CHAT_ID:
                 text = f'⚠ При отправке уведомления возникла ошибка: {e}'
-                bot.send_message(config.CHAT_ID, text)
+
+                try:
+                    bot.send_message(config.CHAT_ID, text)
+                except Exception:
+                    log.exception('Ошибка при отправке уведомления об ошибке')
+
                 time.sleep(60)
 
         finally:
