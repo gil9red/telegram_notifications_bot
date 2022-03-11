@@ -10,12 +10,15 @@ import time
 from threading import Thread
 
 # pip install python-telegram-bot
-from telegram import Update, Bot, ParseMode
-from telegram.ext import Updater, MessageHandler, CommandHandler, Filters, CallbackContext, Defaults
+from telegram import Update, Bot, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters, CallbackContext, Defaults
+)
 
 import config
 import db
 
+from config import MESS_MAX_LENGTH, INLINE_BUTTON_TEXT_URL, INLINE_BUTTON_TEXT_DELETE
 from common import get_logger, log_func, reply_error, TypeEnum
 
 
@@ -24,7 +27,9 @@ DATA = {
     'IS_WORKING': True,
 }
 
-MESS_MAX_LENGTH = 4096
+PATTERN_DELETE_MESSAGE = 'delete_message'
+INLINE_BUTTON_DELETE = InlineKeyboardButton(INLINE_BUTTON_TEXT_DELETE, callback_data=PATTERN_DELETE_MESSAGE)
+
 
 log = get_logger(__file__)
 
@@ -46,10 +51,17 @@ def sending_notifications():
                     time.sleep(0.001)
                     continue
 
+                buttons = []
+                if notify.url:
+                    buttons.append(InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url))
+                if notify.has_delete_button:
+                    buttons.append(INLINE_BUTTON_DELETE)
+                reply_markup = InlineKeyboardMarkup.from_row(buttons) if buttons else None
+
                 text = notify.get_html()
                 for n in range(0, len(text), MESS_MAX_LENGTH):
                     mess = text[n: n + MESS_MAX_LENGTH]
-                    bot.send_message(config.CHAT_ID, mess, parse_mode=ParseMode.HTML)
+                    bot.send_message(config.CHAT_ID, mess, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
                 notify.set_as_send()
 
                 time.sleep(1)
@@ -84,6 +96,15 @@ def on_show_notification_count(update: Update, context: CallbackContext):
     count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
 
     message.reply_text(f'{TypeEnum.INFO.emoji} Было отправлено {count} уведомлений', quote=True)
+
+
+@log_func(log)
+def on_callback_delete_message(update: Update, context: CallbackContext):
+    query = update.callback_query
+    if query:
+        query.answer()
+
+    query.delete_message()
 
 
 @log_func(log)
@@ -134,6 +155,7 @@ def main():
 
     dp.add_handler(CommandHandler('start', on_start))
     dp.add_handler(CommandHandler('show_notification_count', on_show_notification_count))
+    dp.add_handler(CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE))
     dp.add_handler(MessageHandler(Filters.text, on_request))
 
     dp.add_error_handler(on_error)

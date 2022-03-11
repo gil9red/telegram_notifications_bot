@@ -27,6 +27,14 @@ async def index(request: web.Request):
         <label for="message">Message:</label>
         <input id="message" name="message" type="message" value="BUGAGA! Привет мир!"/>
     </p>
+    <p>
+        <label for="url">Url:</label>
+        <input id="url" name="url" type="url" value=""/>
+    </p>
+    <p>
+        <label for="has_delete_button">Has delete button:</label>
+        <input id="has_delete_button" name="has_delete_button" type="checkbox" value="true"/>
+    </p>
     <input type="submit"/>
 </form> 
     """
@@ -40,10 +48,23 @@ async def add_notify_handler(request: web.Request):
     if not data:
         data = await request.json()
 
+    print(f'[add_notify] data: {data}')
+
     name = data['name']
     message = data['message']
     type = data.get('type', TypeEnum.INFO)
-    add_notify(name, message, type)
+    url = data.get('url')
+    has_delete_button = data.get('has_delete_button', False)  # Из json поле будет булевым
+    if isinstance(has_delete_button, str):
+        has_delete_button = has_delete_button == 'true'
+
+    add_notify(
+        name=name,
+        message=message,
+        type=type,
+        url=url,
+        has_delete_button=has_delete_button,
+    )
 
     return web.json_response({'ok': True})
 

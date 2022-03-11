@@ -12,7 +12,7 @@ from typing import List, Any, Type
 
 # pip install peewee
 from peewee import (
-    Model, TextField, ForeignKeyField, DateTimeField, CharField, IntegerField
+    Model, TextField, ForeignKeyField, DateTimeField, CharField, IntegerField, BooleanField
 )
 from playhouse.sqliteq import SqliteQueueDatabase
 
@@ -89,16 +89,31 @@ class Notification(BaseModel):
     name = TextField()
     message = TextField()
     type = EnumField(null=False, choices=TypeEnum, default=TypeEnum.INFO)
+    url = TextField(null=True)
+    has_delete_button = BooleanField(default=False)
     append_datetime = DateTimeField(default=DT.datetime.now)
     sending_datetime = DateTimeField(null=True)
 
     @classmethod
-    def add(cls, chat_id: int, name: str, message: str, type=TypeEnum.INFO) -> 'Notification':
+    def add(
+            cls,
+            chat_id: int,
+            name: str,
+            message: str,
+            type: TypeEnum = TypeEnum.INFO,
+            url: str = None,
+            has_delete_button: bool = False,
+    ) -> 'Notification':
+        if isinstance(url, str) and not url.strip():
+            url = None
+
         return cls.create(
             chat_id=chat_id,
             name=name,
             message=message,
             type=type,
+            url=url,
+            has_delete_button=has_delete_button,
         )
 
     @classmethod
