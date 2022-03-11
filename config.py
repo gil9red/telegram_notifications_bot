@@ -38,5 +38,5 @@ PORT = 10016
 
 MESS_MAX_LENGTH = 4096
 
-INLINE_BUTTON_TEXT_URL = '🔗'
-INLINE_BUTTON_TEXT_DELETE = '❌'
+INLINE_BUTTON_TEXT_URL = '🔗 Открыть ссылку'
+INLINE_BUTTON_TEXT_DELETE = '❌ Удалить'
