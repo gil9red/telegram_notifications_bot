@@ -16,7 +16,7 @@ routes = web.RouteTableDef()
 
 
 @routes.get('/')
-async def index(request: web.Request):
+async def index(_: web.Request):
     text = """
 <form action="/add_notify" method="post" accept-charset="utf-8"
     <p>
@@ -35,6 +35,16 @@ async def index(request: web.Request):
         <label for="has_delete_button">Has delete button:</label>
         <input id="has_delete_button" name="has_delete_button" type="checkbox" value="true"/>
     </p>
+    <fieldset>
+        <legend>Show type:</legend>
+        <div>
+            <input id="show_type_true" name="show_type" type="radio" value="true" checked/>
+            <label for="show_type_true">Show</label>
+            
+            <input id="show_type_hide" name="show_type" type="radio" value="false"/>
+            <label for="show_type_hide">Hide</label>
+        </div>
+    </fieldset>
     <input type="submit"/>
 </form> 
     """
@@ -54,9 +64,14 @@ async def add_notify_handler(request: web.Request):
     message = data['message']
     type = data.get('type', TypeEnum.INFO)
     url = data.get('url')
+
     has_delete_button = data.get('has_delete_button', False)  # Из json поле будет булевым
     if isinstance(has_delete_button, str):
         has_delete_button = has_delete_button == 'true'
+
+    show_type = data.get('show_type', True)  # Из json поле будет булевым
+    if isinstance(show_type, str):
+        show_type = show_type == 'true'
 
     add_notify(
         name=name,
@@ -64,6 +79,7 @@ async def add_notify_handler(request: web.Request):
         type=type,
         url=url,
         has_delete_button=has_delete_button,
+        show_type=show_type,
     )
 
     return web.json_response({'ok': True})

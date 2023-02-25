@@ -15,6 +15,7 @@ def add_notify(
         type: TypeEnum | str = TypeEnum.INFO,
         url: str = None,
         has_delete_button: bool = False,
+        show_type: bool = True,
 ):
     if not CHAT_ID:
         raise Exception('Нужно заполнить "CHAT_ID.txt"!')
@@ -29,6 +30,7 @@ def add_notify(
         type=type,
         url=url,
         has_delete_button=has_delete_button,
+        show_type=show_type,
     )
 
 
@@ -37,4 +39,5 @@ if __name__ == '__main__':
     add_notify('', 'Hello World! Привет мир!')
     add_notify('TEST', 'With url-button!', url='https://example.com/')
     add_notify('TEST', 'With delete-button!', has_delete_button=True)
+    add_notify('TEST', 'show_type=False!', show_type=False)
     add_notify('TEST', 'With url and delete buttons!', url='https://example.com/', has_delete_button=True)

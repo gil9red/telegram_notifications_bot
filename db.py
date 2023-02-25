@@ -106,6 +106,7 @@ class Notification(BaseModel):
     type = EnumField(null=False, choices=TypeEnum, default=TypeEnum.INFO)
     url = TextField(null=True)
     has_delete_button = BooleanField(default=False)
+    show_type = BooleanField(default=True)
     append_datetime = DateTimeField(default=DT.datetime.now)
     sending_datetime = DateTimeField(null=True)
 
@@ -118,6 +119,7 @@ class Notification(BaseModel):
             type: TypeEnum = TypeEnum.INFO,
             url: str = None,
             has_delete_button: bool = False,
+            show_type: bool = True,
     ) -> 'Notification':
         if isinstance(url, str) and not url.strip():
             url = None
@@ -129,6 +131,7 @@ class Notification(BaseModel):
             type=type,
             url=url,
             has_delete_button=has_delete_button,
+            show_type=show_type,
         )
 
     @classmethod
@@ -152,9 +155,15 @@ class Notification(BaseModel):
         Функция возвращает текст для отправки запроса в формате HTML
         """
 
-        title = html.escape(self.name)
-        text = html.escape(self.message)
-        return f'{self.type.emoji} <b>{title}</b>\n{text}'
+        text = ''
+        if self.show_type:
+            text += self.type.emoji + ' '
+
+        name = html.escape(self.name)
+        message = html.escape(self.message)
+        text += f'<b>{name}</b>\n{message}'
+
+        return text.strip()
 
 
 db.connect()
