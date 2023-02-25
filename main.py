@@ -84,13 +84,13 @@ def sending_notifications():
 
 
 @log_func(log)
-def on_start(update: Update, context: CallbackContext):
+def on_start(update: Update, _: CallbackContext):
     if not config.CHAT_ID:
         update.effective_message.reply_text('Введите что-нибудь для получения chat_id')
 
 
 @log_func(log)
-def on_show_notification_count(update: Update, context: CallbackContext):
+def on_show_notification_count(update: Update, _: CallbackContext):
     message = update.effective_message
     chat_id = get_chat_id(update)
     count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
@@ -99,7 +99,7 @@ def on_show_notification_count(update: Update, context: CallbackContext):
 
 
 @log_func(log)
-def on_callback_delete_message(update: Update, context: CallbackContext):
+def on_callback_delete_message(update: Update, _: CallbackContext):
     query = update.callback_query
     if query:
         query.answer()
@@ -108,7 +108,7 @@ def on_callback_delete_message(update: Update, context: CallbackContext):
 
 
 @log_func(log)
-def on_request(update: Update, context: CallbackContext):
+def on_request(update: Update, _: CallbackContext):
     message = update.effective_message
 
     if not config.CHAT_ID:
@@ -122,7 +122,7 @@ def on_request(update: Update, context: CallbackContext):
 
         is_working = DATA['IS_WORKING']
         text = (
-            f'Поддерживаемые комманды: <b>start</b>, <b>stop</b>\n'
+            f'Поддерживаемые команды: <b>start</b>, <b>stop</b>\n'
             f'Рассылка уведомлений: <b>' + ('запущена' if is_working else 'остановлена') + '</b>'
         )
 

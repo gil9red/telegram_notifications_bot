@@ -4,8 +4,6 @@
 __author__ = 'ipetrash'
 
 
-from typing import Union
-
 from db import Notification
 from config import CHAT_ID
 from common import TypeEnum
@@ -14,7 +12,7 @@ from common import TypeEnum
 def add_notify(
         name: str,
         message: str,
-        type: Union[TypeEnum, str] = TypeEnum.INFO,
+        type: TypeEnum | str = TypeEnum.INFO,
         url: str = None,
         has_delete_button: bool = False,
 ):

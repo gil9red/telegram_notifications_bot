@@ -5,7 +5,6 @@ __author__ = 'ipetrash'
 
 
 import time
-from typing import Union
 
 import requests
 
@@ -19,7 +18,7 @@ URL = f'http://{HOST}:{PORT}/add_notify'
 def add_notify(
         name: str,
         message: str,
-        type: Union[TypeEnum, str] = TypeEnum.INFO,
+        type: TypeEnum | str = TypeEnum.INFO,
         url: str = None,
         has_delete_button: bool = False,
 ):

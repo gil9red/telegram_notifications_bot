@@ -7,8 +7,9 @@ __author__ = 'ipetrash'
 import datetime as DT
 import enum
 import html
+import time
 
-from typing import List, Any, Type
+from typing import Any, Type
 
 # pip install peewee
 from peewee import (
@@ -61,6 +62,20 @@ class EnumField(CharField):
 class BaseModel(Model):
     class Meta:
         database = db
+
+    @classmethod
+    def get_inherited_models(cls) -> list[Type['BaseModel']]:
+        return sorted(cls.__subclasses__(), key=lambda x: x.__name__)
+
+    @classmethod
+    def print_count_of_tables(cls):
+        items = []
+        for sub_cls in cls.get_inherited_models():
+            name = sub_cls.__name__
+            count = sub_cls.select().count()
+            items.append(f'{name}: {count}')
+
+        print(', '.join(items))
 
     def __str__(self):
         fields = []
@@ -117,7 +132,7 @@ class Notification(BaseModel):
         )
 
     @classmethod
-    def get_unsent(cls) -> List['Notification']:
+    def get_unsent(cls) -> list['Notification']:
         """
         Функция класс, что возвращает неотправленные уведомления
         """
@@ -143,10 +158,19 @@ class Notification(BaseModel):
 
 
 db.connect()
-db.create_tables([Notification])
+db.create_tables(BaseModel.get_inherited_models())
+
+# Задержка в 50мс, чтобы дать время на запуск SqliteQueueDatabase и создание таблиц
+# Т.к. в SqliteQueueDatabase запросы на чтение выполняются сразу, а на запись попадают в очередь
+time.sleep(0.050)
 
 
 if __name__ == '__main__':
+    BaseModel.print_count_of_tables()
+    # Notification: 2593
+
+    print()
+
     # Notification.delete().execute()
 
     # Notification.add(
