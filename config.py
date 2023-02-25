@@ -7,7 +7,6 @@ __author__ = 'ipetrash'
 import os
 
 from pathlib import Path
-from typing import Optional
 
 
 DIR = Path(__file__).resolve().parent
@@ -16,7 +15,7 @@ TOKEN_PATH = DIR / 'TOKEN.txt'
 TOKEN = os.environ.get('TOKEN') or TOKEN_PATH.read_text('utf-8').strip()
 
 CHAT_ID_PATH = DIR / 'CHAT_ID.txt'
-CHAT_ID: Optional[int] = None
+CHAT_ID: int | None = None
 try:
     CHAT_ID = int(
         os.environ.get('CHAT_ID') or CHAT_ID_PATH.read_text('utf-8').strip()
