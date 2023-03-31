@@ -7,7 +7,7 @@ __author__ = 'ipetrash'
 # SOURCE: http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#schema-migrations
 
 
-from playhouse.migrate import SqliteDatabase, SqliteMigrator, BooleanField, TextField, migrate
+from playhouse.migrate import SqliteDatabase, SqliteMigrator, BooleanField, migrate
 from config import DB_FILE_NAME
 
 
