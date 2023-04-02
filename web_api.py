@@ -46,7 +46,26 @@ async def index(_: web.Request):
         </div>
     </fieldset>
     <input type="submit"/>
-</form> 
+    <br/>
+    <div id="result"></div>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelector('form').addEventListener('submit', function (event) {
+        let data = this;
+        fetch(data.getAttribute('action'), {
+            method: data.getAttribute('method'),
+            body: new FormData(data)
+        })
+            .then(res => res.text())
+            .then(function (data) {
+                document.querySelector('#result').textContent = data;
+            })
+        ;
+        event.preventDefault();
+    });
+});
+</script>
     """
 
     return web.Response(text=text, content_type='text/html')
