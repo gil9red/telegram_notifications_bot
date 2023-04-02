@@ -111,9 +111,12 @@ def on_callback_delete_message(update: Update, _: CallbackContext):
 def on_request(update: Update, _: CallbackContext):
     message = update.effective_message
 
+    chat_id = get_chat_id(update)
+
+    # Если чат не задан
     if not config.CHAT_ID:
-        text = f'CHAT_ID: {get_chat_id(update)}'
-    else:
+        text = f'CHAT_ID: {chat_id}'
+    elif chat_id == config.CHAT_ID:
         command = message.text.lower()
         if command == 'start':
             DATA['IS_WORKING'] = True
@@ -125,6 +128,8 @@ def on_request(update: Update, _: CallbackContext):
             f'Поддерживаемые команды: <b>start</b>, <b>stop</b>\n'
             f'Рассылка уведомлений: <b>' + ('запущена' if is_working else 'остановлена') + '</b>'
         )
+    else:
+        text = 'Этот чат не имеет доступа к функциям бота'
 
     message.reply_html(text)
 
