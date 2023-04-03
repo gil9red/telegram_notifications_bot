@@ -6,6 +6,7 @@ __author__ = 'ipetrash'
 
 import os
 import time
+import re
 
 from threading import Thread
 
@@ -14,12 +15,23 @@ from telegram import Update, Bot, ParseMode, InlineKeyboardButton, InlineKeyboar
 from telegram.ext import (
     Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters, CallbackContext, Defaults
 )
+from telegram.error import BadRequest
 
 import config
 import db
 
 from config import MESS_MAX_LENGTH, INLINE_BUTTON_TEXT_URL, INLINE_BUTTON_TEXT_DELETE
 from common import get_logger, log_func, reply_error, TypeEnum
+from regexp_patterns import fill_string_pattern, PATTERN_NOTIFICATION_PAGE
+from third_party.telegram_bot_pagination import InlineKeyboardPaginator
+from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
+
+
+def get_int_from_match(match: re.Match, name: str, default: int = None) -> int:
+    try:
+        return int(match[name])
+    except:
+        return default
 
 
 DATA = {
@@ -38,9 +50,74 @@ def get_chat_id(update: Update) -> int:
     return update.effective_chat.id
 
 
+def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton]:
+    buttons = []
+    if notify.url:
+        buttons.append(
+            InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url)
+        )
+    if notify.has_delete_button:
+        buttons.append(INLINE_BUTTON_DELETE)
+
+    return buttons
+
+
+def get_paginator_for_notify(
+        notify: db.Notification,
+        buttons: list[InlineKeyboardButton],
+        pattern = PATTERN_NOTIFICATION_PAGE,
+) -> InlineKeyboardPaginator:
+    page = notify.get_index_in_group() + 1
+    total = notify.group.get_total_notifications()
+
+    paginator = InlineKeyboardPaginator(
+        page_count=total,
+        current_page=page,
+        data_pattern=fill_string_pattern(pattern, '{page}', notify.group.id)
+    )
+    if buttons:
+        paginator.add_before(*buttons)
+
+    paginator.add_prev_next_buttons()
+
+    return paginator
+
+
+def send_notify(
+        bot: Bot,
+        notify: db.Notification,
+        reply_markup: str | None,
+        chat_id: int = config.CHAT_ID,
+        as_new_message: bool = True,
+        message_id: int = None,
+):
+    text = notify.get_html()
+    if len(text) > MESS_MAX_LENGTH:
+        text = text[:MESS_MAX_LENGTH - 3] + '...'
+
+    parse_mode = ParseMode.HTML
+
+    if as_new_message:
+        bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            parse_mode=parse_mode,
+            reply_markup=reply_markup
+        )
+        notify.set_as_send()
+    else:
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=text,
+            parse_mode=parse_mode,
+            reply_markup=reply_markup
+        )
+
+
 def sending_notifications():
     while True:
-        bot: Bot = DATA['BOT']
+        bot: Bot | None = DATA['BOT']
         if not bot or not config.CHAT_ID:
             continue
 
@@ -51,18 +128,28 @@ def sending_notifications():
                     time.sleep(0.001)
                     continue
 
-                buttons = []
-                if notify.url:
-                    buttons.append(InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url))
-                if notify.has_delete_button:
-                    buttons.append(INLINE_BUTTON_DELETE)
-                reply_markup = InlineKeyboardMarkup.from_row(buttons) if buttons else None
+                buttons = get_buttons_for_notify(notify)
 
-                text = notify.get_html()
-                for n in range(0, len(text), MESS_MAX_LENGTH):
-                    mess = text[n: n + MESS_MAX_LENGTH]
-                    bot.send_message(config.CHAT_ID, mess, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
-                notify.set_as_send()
+                # Если уведомление находится в группе
+                # Нужно вернуть только первое уведомление с пагинацией
+                if notify.group:
+                    # Если на текущий момент не все уведомления из группы находятся в базе
+                    if not notify.group.is_complete():
+                        continue
+
+                    # Если уведомление не первое в группе, то не возвращаем его
+                    # Но помечаем как отправленное
+                    if not notify.is_first_in_group():
+                        notify.set_as_send()
+                        continue
+
+                    paginator = get_paginator_for_notify(notify, buttons)
+                    reply_markup = paginator.markup
+
+                else:
+                    reply_markup = InlineKeyboardMarkup.from_row(buttons) if buttons else None
+
+                send_notify(bot, notify, reply_markup)
 
                 time.sleep(1)
 
@@ -105,6 +192,41 @@ def on_callback_delete_message(update: Update, _: CallbackContext):
         query.answer()
 
     query.delete_message()
+
+
+@log_func(log)
+def on_change_notification_page(update: Update, context: CallbackContext):
+    query = update.callback_query
+    if query:
+        query.answer()
+
+    page = get_int_from_match(context.match, 'page')
+    by_group_id = get_int_from_match(context.match, 'group_id')
+
+    group: db.NotificationGroup = db.NotificationGroup.get_by_id(by_group_id)
+    notify = group.get_notification(page - 1)
+    buttons = get_buttons_for_notify(notify)
+
+    paginator = get_paginator_for_notify(notify, buttons)
+    reply_markup = paginator.markup
+
+    # Fix error: "telegram.error.BadRequest: Message is not modified"
+    if is_equal_inline_keyboards(reply_markup, query.message.reply_markup):
+        return
+
+    try:
+        send_notify(
+            context.bot,
+            notify,
+            reply_markup,
+            as_new_message=False,
+            message_id=update.effective_message.message_id
+        )
+    except BadRequest as e:
+        if 'Message is not modified' in str(e):
+            return
+
+        raise e
 
 
 @log_func(log)
@@ -161,6 +283,7 @@ def main():
     dp.add_handler(CommandHandler('start', on_start))
     dp.add_handler(CommandHandler('show_notification_count', on_show_notification_count))
     dp.add_handler(CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE))
+    dp.add_handler(CallbackQueryHandler(on_change_notification_page, pattern=PATTERN_NOTIFICATION_PAGE))
     dp.add_handler(MessageHandler(Filters.text, on_request))
 
     dp.add_error_handler(on_error)

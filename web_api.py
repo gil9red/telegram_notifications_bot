@@ -15,6 +15,37 @@ from common import TypeEnum
 routes = web.RouteTableDef()
 
 
+def process_notify(data: dict):
+    name = data['name']
+    message = data['message']
+    type = data.get('type', TypeEnum.INFO)
+    url = data.get('url')
+
+    has_delete_button = data.get('has_delete_button', False)  # Из json поле будет булевым
+    if isinstance(has_delete_button, str):
+        has_delete_button = has_delete_button == 'true'
+
+    show_type = data.get('show_type', True)  # Из json поле будет булевым
+    if isinstance(show_type, str):
+        show_type = show_type == 'true'
+
+    group = data.get('group')
+    group_max_number = data.get('group_max_number')
+    if group_max_number and not isinstance(group_max_number, int):
+        group_max_number = int(group_max_number)
+
+    add_notify(
+        name=name,
+        message=message,
+        type=type,
+        url=url,
+        has_delete_button=has_delete_button,
+        show_type=show_type,
+        group=group,
+        group_max_number=group_max_number,
+    )
+
+
 @routes.get('/')
 async def index(_: web.Request):
     text = """
@@ -25,7 +56,7 @@ async def index(_: web.Request):
     <p/>
     <p>
         <label for="message">Message:</label>
-        <input id="message" name="message" type="message" value="BUGAGA! Привет мир!"/>
+        <input id="message" name="message" type="text" value="BUGAGA! Привет мир!"/>
     </p>
     <p>
         <label for="url">Url:</label>
@@ -45,6 +76,19 @@ async def index(_: web.Request):
             <label for="show_type_hide">Hide</label>
         </div>
     </fieldset>
+    
+    <fieldset>
+        <legend>Group:</legend>
+        <p>
+            <label for="group">Name:</label>
+            <input id="group" name="group" type="text" value=""/>
+        </p>
+        <p>
+            <label for="group_max_number">Max number:</label>
+            <input id="group_max_number" name="group_max_number" type="number" value=""/>
+        </p>
+    </fieldset>
+    
     <input type="submit"/>
     <br/>
     <div id="result"></div>
@@ -73,41 +117,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @routes.post('/add_notify')
 async def add_notify_handler(request: web.Request):
-    data = await request.post()
-    if not data:
-        data = await request.json()
+    try:
+        data = await request.post()
+        if not data:
+            data = await request.json()
 
-    print(f'[add_notify] data: {data}')
+        print(f'[add_notify] data: {data}')
+        process_notify(data)
 
-    name = data['name']
-    message = data['message']
-    type = data.get('type', TypeEnum.INFO)
-    url = data.get('url')
+        return web.json_response({'ok': True})
 
-    has_delete_button = data.get('has_delete_button', False)  # Из json поле будет булевым
-    if isinstance(has_delete_button, str):
-        has_delete_button = has_delete_button == 'true'
+    except Exception as e:
+        return web.json_response({'error': str(e)})
 
-    show_type = data.get('show_type', True)  # Из json поле будет булевым
-    if isinstance(show_type, str):
-        show_type = show_type == 'true'
 
-    add_notify(
-        name=name,
-        message=message,
-        type=type,
-        url=url,
-        has_delete_button=has_delete_button,
-        show_type=show_type,
+if __name__ == '__main__':
+    app = web.Application()
+    app.add_routes(routes)
+
+    web.run_app(
+        app,
+        host=HOST, port=PORT
     )
-
-    return web.json_response({'ok': True})
-
-
-app = web.Application()
-app.add_routes(routes)
-
-web.run_app(
-    app,
-    host=HOST, port=PORT
-)

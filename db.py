@@ -9,7 +9,7 @@ import enum
 import html
 import time
 
-from typing import Any, Type
+from typing import Any, Type, Optional
 
 # pip install peewee
 from peewee import (
@@ -99,6 +99,49 @@ class BaseModel(Model):
         return self.__class__.__name__ + '(' + ', '.join(fields) + ')'
 
 
+class NotificationGroup(BaseModel):
+    name = TextField(unique=True)
+    max_number = IntegerField()
+
+    @classmethod
+    def get_by(cls, name: str) -> Optional['NotificationGroup']:
+        return cls.get_or_none(name=name)
+
+    @classmethod
+    def add(
+            cls,
+            name: str,
+            max_number: int = None,
+    ) -> Optional['NotificationGroup']:
+        obj = cls.get_by(name)
+        if not obj:
+            if not max_number:
+                raise Exception('Значение max_number для новой NotificationGroup должно быть задано!')
+
+            # Нет смысла создавать группу для 1 или меньше элементов
+            if max_number <= 1:
+                return
+
+            obj = cls.create(
+                name=name,
+                max_number=max_number,
+            )
+        return obj
+
+    def get_total_notifications(self) -> int:
+        return len(self.notifications)
+
+    def is_complete(self) -> bool:
+        return self.get_total_notifications() >= self.max_number
+
+    def get_notification(self, idx: int = 0) -> Optional['Notification']:
+        items: list[Notification] = list(self.notifications)
+        try:
+            return items[idx]
+        except IndexError:
+            return
+
+
 class Notification(BaseModel):
     chat_id = IntegerField()
     name = TextField()
@@ -109,6 +152,7 @@ class Notification(BaseModel):
     show_type = BooleanField(default=True)
     append_datetime = DateTimeField(default=DT.datetime.now)
     sending_datetime = DateTimeField(null=True)
+    group: NotificationGroup = ForeignKeyField(NotificationGroup, null=True, backref='notifications')
 
     @classmethod
     def add(
@@ -120,9 +164,26 @@ class Notification(BaseModel):
             url: str = None,
             has_delete_button: bool = False,
             show_type: bool = True,
+            group: NotificationGroup | str = None,
+            group_max_number: int = None,
     ) -> 'Notification':
         if isinstance(url, str) and not url.strip():
             url = None
+
+        # Если группа задана и это имя группы
+        if group and isinstance(group, str):
+            group = NotificationGroup.add(
+                name=group,
+                max_number=group_max_number,
+            )
+
+        if group:
+            number = group.get_total_notifications()
+            if group.max_number <= number:
+                raise Exception(
+                    f'Количество уведомлений {number} в группе {group} '
+                    f'превысило максимальное количество {group.max_number}'
+                )
 
         return cls.create(
             chat_id=chat_id,
@@ -132,6 +193,7 @@ class Notification(BaseModel):
             url=url,
             has_delete_button=has_delete_button,
             show_type=show_type,
+            group=group,
         )
 
     @classmethod
@@ -150,6 +212,13 @@ class Notification(BaseModel):
         self.sending_datetime = DT.datetime.now()
         self.save()
 
+    def get_index_in_group(self) -> int:
+        if self.group:
+            for i in range(self.group.get_total_notifications()):
+                if self == self.group.get_notification(i):
+                    return i
+        return -1
+
     def get_html(self) -> str:
         """
         Функция возвращает текст для отправки запроса в формате HTML
@@ -161,9 +230,21 @@ class Notification(BaseModel):
 
         name = html.escape(self.name)
         message = html.escape(self.message)
-        text += f'<b>{name}</b>\n{message}'
+
+        number_in_group: str = ''
+        if self.group:
+            number = self.get_index_in_group() + 1
+            total = self.group.get_total_notifications()
+            number_in_group = f' [{number}/{total}]'
+
+        text += f'<b>{name}</b>{number_in_group}\n{message}'
 
         return text.strip()
+
+    def is_first_in_group(self) -> bool:
+        if not self.group:
+            return False
+        return self == self.group.get_notification()
 
 
 db.connect()

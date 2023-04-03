@@ -22,6 +22,8 @@ def add_notify(
         url: str = None,
         has_delete_button: bool = False,
         show_type: bool = True,
+        group: str = None,
+        group_max_number: int = None,
 ):
     data = {
         'name': name,
@@ -30,6 +32,8 @@ def add_notify(
         'url': url,
         'has_delete_button': has_delete_button,
         'show_type': show_type,
+        'group': group,
+        'group_max_number': group_max_number,
     }
 
     # Попытки
@@ -57,3 +61,6 @@ if __name__ == '__main__':
     add_notify('TEST', 'With url-button!', url='https://example.com/')
     add_notify('TEST', 'With delete-button!', has_delete_button=True)
     add_notify('TEST', 'With url and delete buttons!', url='https://example.com/', has_delete_button=True)
+
+    add_notify('TEST', '#1. Group 1!', group='group 1', group_max_number=2)
+    add_notify('TEST', '#2. Group 1!', group='group 1', group_max_number=2)
