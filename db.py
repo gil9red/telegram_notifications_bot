@@ -185,6 +185,10 @@ class Notification(BaseModel):
                     f'превысило максимальное количество {group.max_number}'
                 )
 
+        # Явно задаем отсутствие группы (например, будет проблема, если в group попадет пустая строка)
+        if not group:
+            group = None
+
         return cls.create(
             chat_id=chat_id,
             name=name,

@@ -192,6 +192,19 @@ class TestDbNotification(unittest.TestCase):
             self.assertEqual(group_name, notification.group.name)
             self.assertEqual(group_max_number, notification.group.max_number)
 
+        with self.subTest('Invalid group'):
+            notification = Notification.add(
+                chat_id=chat_id,
+                name=name,
+                message=message,
+                type=type,
+                url=url,
+                group='',
+                group_max_number=group_max_number,
+            )
+            self.assertIsNotNone(notification)
+            self.assertIsNone(notification.group)
+
         with self.subTest('Group as object'):
             group = NotificationGroup.add(
                 name=group_name,
