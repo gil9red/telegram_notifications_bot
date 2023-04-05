@@ -78,8 +78,6 @@ def get_paginator_for_notify(
     if buttons:
         paginator.add_before(*buttons)
 
-    paginator.add_prev_next_buttons()
-
     return paginator
 
 

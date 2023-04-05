@@ -6,6 +6,7 @@
 # author: https://github.com/gil9red
 
 
+import enum
 import json
 
 from dataclasses import dataclass
@@ -19,19 +20,27 @@ class InlineKeyboardButton:
     url: str = None
 
 
+class PrevNextButtonsEnum(enum.Enum):
+    NONE = enum.auto()
+    ROW = enum.auto()
+    BOTTOM = enum.auto()
+
+
+def _button_to_dict(button: InlineKeyboardButton) -> dict[str, str]:
+    data = dict(text=button.text)
+    if button.callback_data:
+        data['callback_data'] = button.callback_data
+
+    if button.url:
+        data['url'] = button.url
+
+    return data
+
+
 def _buttons_to_dict(buttons: Iterable[InlineKeyboardButton]) -> list[dict[str, str]]:
-    items = []
-    for button in buttons:
-        data = dict(text=button.text)
-        if button.callback_data:
-            data['callback_data'] = button.callback_data
-
-        if button.url:
-            data['url'] = button.url
-
-        items.append(data)
-
-    return items
+    return [
+        _button_to_dict(button) for button in buttons
+    ]
 
 
 def calc_pages(page: int, start_page: int, max_page: int) -> tuple[int, int]:
@@ -51,11 +60,15 @@ class InlineKeyboardPaginator:
     last_page_label: str = '{} »'
     current_page_label: str = '·{}·'
 
+    prev_label: str = '⬅️'
+    next_label: str = '➡️'
+
     def __init__(
             self,
             page_count: int,
             current_page: int = 1,
             data_pattern: str = '{page}',
+            prev_next_buttons: PrevNextButtonsEnum = PrevNextButtonsEnum.NONE,
     ):
         self._keyboard_before = list()
         self._keyboard_after = list()
@@ -69,6 +82,8 @@ class InlineKeyboardPaginator:
         self.page_count = page_count
 
         self.data_pattern = data_pattern
+
+        self.prev_next_buttons = prev_next_buttons
 
     def _build(self):
         keyboard_dict = dict()
@@ -87,6 +102,32 @@ class InlineKeyboardPaginator:
         keyboard_dict[self.current_page] = self.current_page_label.format(self.current_page)
 
         self._keyboard = self._to_button_array(keyboard_dict)
+
+        if self.prev_next_buttons != PrevNextButtonsEnum.NONE and self.page_count > 1:
+            prev_page, next_page = calc_pages(
+                page=self.current_page,
+                start_page=1,
+                max_page=self.page_count
+            )
+
+            prev_button = InlineKeyboardButton(
+                text=self.prev_label,
+                callback_data=self.data_pattern.format(page=prev_page)
+            )
+            next_button = InlineKeyboardButton(
+                text=self.next_label,
+                callback_data=self.data_pattern.format(page=next_page)
+            )
+
+            if self.prev_next_buttons == PrevNextButtonsEnum.ROW:
+                self._keyboard.insert(0, _button_to_dict(
+                    prev_button
+                ))
+                self._keyboard.append(_button_to_dict(
+                    next_button
+                ))
+            elif self.prev_next_buttons == PrevNextButtonsEnum.BOTTOM:
+                self.add_after(prev_button, next_button)
 
     def _build_for_multi_pages(self):
         if self.current_page <= 3:
@@ -203,22 +244,3 @@ class InlineKeyboardPaginator:
         self._keyboard_after.append(
             _buttons_to_dict(inline_buttons)
         )
-
-    def add_prev_next_buttons(self: 'InlineKeyboardPaginator'):
-        if self.page_count > 1:
-            prev_page, next_page = calc_pages(
-                page=self.current_page,
-                start_page=1,
-                max_page=self.page_count
-            )
-
-            self.add_after(
-                InlineKeyboardButton(
-                    text='⬅️',
-                    callback_data=self.data_pattern.format(page=prev_page)
-                ),
-                InlineKeyboardButton(
-                    text='➡️',
-                    callback_data=self.data_pattern.format(page=next_page)
-                ),
-            )
