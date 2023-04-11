@@ -12,6 +12,10 @@ from third_party.regexp import fill_string_pattern
 PATTERN_NOTIFICATION_PAGE = re.compile(
     r'^notify page=(?P<page>\d+) group#(?P<group_id>\d*)$'
 )
+PATTERN_DELETE_MESSAGE = 'delete_message'
+
+COMMAND_START = 'start'
+COMMAND_SHOW_NOTIFICATION_COUNT = 'show_notification_count'
 
 
 if __name__ == '__main__':

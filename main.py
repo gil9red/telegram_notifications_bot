@@ -22,7 +22,11 @@ import db
 
 from config import MESS_MAX_LENGTH, INLINE_BUTTON_TEXT_URL, INLINE_BUTTON_TEXT_DELETE
 from common import get_logger, log_func, reply_error, TypeEnum
-from regexp_patterns import fill_string_pattern, PATTERN_NOTIFICATION_PAGE
+from regexp_patterns import (
+    fill_string_pattern,
+    PATTERN_NOTIFICATION_PAGE, PATTERN_DELETE_MESSAGE,
+    COMMAND_START, COMMAND_SHOW_NOTIFICATION_COUNT
+)
 from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
 
@@ -39,8 +43,10 @@ DATA = {
     'IS_WORKING': True,
 }
 
-PATTERN_DELETE_MESSAGE = 'delete_message'
-INLINE_BUTTON_DELETE = InlineKeyboardButton(INLINE_BUTTON_TEXT_DELETE, callback_data=PATTERN_DELETE_MESSAGE)
+INLINE_BUTTON_DELETE = InlineKeyboardButton(
+    INLINE_BUTTON_TEXT_DELETE,
+    callback_data=PATTERN_DELETE_MESSAGE
+)
 
 
 log = get_logger(__file__)
@@ -180,7 +186,7 @@ def on_show_notification_count(update: Update, _: CallbackContext):
     chat_id = get_chat_id(update)
     count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
 
-    message.reply_text(f'{TypeEnum.INFO.emoji} Было отправлено {count} уведомлений', quote=True)
+    message.reply_text(f'{TypeEnum.INFO.emoji} Отправлено уведомлений: {count}', quote=True)
 
 
 @log_func(log)
@@ -278,8 +284,8 @@ def main():
 
     dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler('start', on_start))
-    dp.add_handler(CommandHandler('show_notification_count', on_show_notification_count))
+    dp.add_handler(CommandHandler(COMMAND_START, on_start))
+    dp.add_handler(CommandHandler(COMMAND_SHOW_NOTIFICATION_COUNT, on_show_notification_count))
     dp.add_handler(CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE))
     dp.add_handler(CallbackQueryHandler(on_change_notification_page, pattern=PATTERN_NOTIFICATION_PAGE))
     dp.add_handler(MessageHandler(Filters.text, on_request))
