@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 import unittest
@@ -26,37 +26,36 @@ class TestRegexpPatterns(unittest.TestCase):
         callback_data_value = P.fill_string_pattern(pattern, *args)
 
         size_callback_data = len(bytes(callback_data_value, "utf-8"))
-        DEBUG and print(f'    Size {size_callback_data} of {callback_data_value!r}\n')
+        DEBUG and print(f"    Size {size_callback_data} of {callback_data_value!r}\n")
         self.assertTrue(
             size_callback_data <= self.MAX_DATA_SIZE,
-            f"Превышение размера callback_data для {pattern}. Размер: {size_callback_data}"
+            f"Превышение размера callback_data для {pattern}. Размер: {size_callback_data}",
         )
 
     def test_pattern_authors_page(self):
-        with self.subTest('Nulls'):
+        with self.subTest("Nulls"):
             self.assertEqual(
-                'notify page=1 group#None',
-                P.fill_string_pattern(P.PATTERN_NOTIFICATION_PAGE, 1, None)
+                "notify page=1 group#None",
+                P.fill_string_pattern(P.PATTERN_NOTIFICATION_PAGE, 1, None),
             )
 
-        with self.subTest('Max'):
+        with self.subTest("Max"):
             self.do_check_callback_data_value(
-                P.PATTERN_NOTIFICATION_PAGE,
-                self.MAX_PAGE, self.MAX_ID
+                P.PATTERN_NOTIFICATION_PAGE, self.MAX_PAGE, self.MAX_ID
             )
 
 
 class TestDbNotificationGroup(unittest.TestCase):
     def setUp(self):
         self.models = [NotificationGroup, Notification]
-        self.test_db = SqliteDatabase(':memory:')
+        self.test_db = SqliteDatabase(":memory:")
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
     def test_add(self):
-        with self.subTest('Ok'):
-            name = 'test group 1'
+        with self.subTest("Ok"):
+            name = "test group 1"
             max_number = 2
             group = NotificationGroup.add(name=name, max_number=max_number)
 
@@ -69,27 +68,25 @@ class TestDbNotificationGroup(unittest.TestCase):
                 NotificationGroup.add(name='test group 1', max_number=2)
             )
 
-        with self.subTest('Max number = 1'):
+        with self.subTest("Max number = 1"):
             self.assertIsNone(
-                NotificationGroup.add(name='test group 404', max_number=1)
+                NotificationGroup.add(name="test group 404", max_number=1)
             )
 
-        with self.subTest('Max number is not defined for new group'):
+        with self.subTest("Max number is not defined for new group"):
             with self.assertRaises(Exception):
-                NotificationGroup.add(name='test group 404')
+                NotificationGroup.add(name="test group 404")
 
-        with self.subTest('Max number is 0 for new group'):
+        with self.subTest("Max number is 0 for new group"):
             with self.assertRaises(Exception):
-                NotificationGroup.add(name='test group 404', max_number=0)
+                NotificationGroup.add(name="test group 404", max_number=0)
 
     def test_get_by(self):
-        name = 'test group 1'
+        name = "test group 1"
 
-        self.assertIsNone(
-            NotificationGroup.get_by(name=name)
-        )
+        self.assertIsNone(NotificationGroup.get_by(name=name))
 
-        group = NotificationGroup.add(name='test group 1', max_number=999)
+        group = NotificationGroup.add(name="test group 1", max_number=999)
 
         self.assertEqual(
             group,
@@ -97,13 +94,13 @@ class TestDbNotificationGroup(unittest.TestCase):
         )
 
     def test_get_total_notifications(self):
-        group = NotificationGroup.add(name='test group 1', max_number=10)
+        group = NotificationGroup.add(name="test group 1", max_number=10)
 
         notifications = [
             Notification.add(
                 chat_id=1,
-                name='test',
-                message=f'message #{i}',
+                name="test",
+                message=f"message #{i}",
                 group=group,
             )
             for i in range(group.max_number)
@@ -111,14 +108,14 @@ class TestDbNotificationGroup(unittest.TestCase):
         self.assertEqual(len(notifications), group.get_total_notifications())
 
     def test_is_complete(self):
-        group = NotificationGroup.add(name='test group 1', max_number=10)
+        group = NotificationGroup.add(name="test group 1", max_number=10)
         self.assertFalse(group.is_complete())
 
         for i in range(group.max_number // 2):
             Notification.add(
                 chat_id=1,
-                name='test',
-                message=f'message #{i}',
+                name="test",
+                message=f"message #{i}",
                 group=group,
             )
         self.assertFalse(group.is_complete())
@@ -126,20 +123,20 @@ class TestDbNotificationGroup(unittest.TestCase):
         for i in range(group.max_number // 2):
             Notification.add(
                 chat_id=1,
-                name='test',
-                message=f'message #{i}',
+                name="test",
+                message=f"message #{i}",
                 group=group,
             )
         self.assertTrue(group.is_complete())
 
     def test_get_notification(self):
-        group = NotificationGroup.add(name='test group 1', max_number=10)
+        group = NotificationGroup.add(name="test group 1", max_number=10)
 
         notifications = [
             Notification.add(
                 chat_id=1,
-                name='test',
-                message=f'message #{i}',
+                name="test",
+                message=f"message #{i}",
                 group=group,
             )
             for i in range(group.max_number)
@@ -151,22 +148,22 @@ class TestDbNotificationGroup(unittest.TestCase):
 class TestDbNotification(unittest.TestCase):
     def setUp(self):
         self.models = [NotificationGroup, Notification]
-        self.test_db = SqliteDatabase(':memory:')
+        self.test_db = SqliteDatabase(":memory:")
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
     def test_add(self):
         chat_id = 123
-        name = 'test'
-        message = 'message 1'
+        name = "test"
+        message = "message 1"
 
-        group_name = 'group 1'
+        group_name = "group 1"
         group_max_number = 3
 
-        with self.subTest('All fields'):
+        with self.subTest("All fields"):
             type = TypeEnum.INFO
-            url = 'https://example.com'
+            url = "https://example.com"
             has_delete_button = True
             show_type = True
 
@@ -192,20 +189,20 @@ class TestDbNotification(unittest.TestCase):
             self.assertEqual(group_name, notification.group.name)
             self.assertEqual(group_max_number, notification.group.max_number)
 
-        with self.subTest('Invalid group'):
+        with self.subTest("Invalid group"):
             notification = Notification.add(
                 chat_id=chat_id,
                 name=name,
                 message=message,
                 type=type,
                 url=url,
-                group='',
+                group="",
                 group_max_number=group_max_number,
             )
             self.assertIsNotNone(notification)
             self.assertIsNone(notification.group)
 
-        with self.subTest('Group as object'):
+        with self.subTest("Group as object"):
             group = NotificationGroup.add(
                 name=group_name,
                 max_number=group_max_number,
@@ -224,7 +221,7 @@ class TestDbNotification(unittest.TestCase):
             self.assertEqual(group.name, notification.group.name)
             self.assertEqual(group.max_number, notification.group.max_number)
 
-        with self.subTest('Excess of the maximum number'):
+        with self.subTest("Excess of the maximum number"):
             with self.assertRaises(Exception):
                 for _ in range(group_max_number + 1):
                     Notification.add(
@@ -237,8 +234,8 @@ class TestDbNotification(unittest.TestCase):
 
     def test_get_unsent(self):
         chat_id = 123
-        name = 'test'
-        message = 'message 1'
+        name = "test"
+        message = "message 1"
 
         items = [
             Notification.add(
@@ -252,8 +249,8 @@ class TestDbNotification(unittest.TestCase):
 
     def test_set_as_send(self):
         chat_id = 123
-        name = 'test'
-        message = 'message 1'
+        name = "test"
+        message = "message 1"
 
         items = [
             Notification.add(
@@ -271,14 +268,14 @@ class TestDbNotification(unittest.TestCase):
         self.assertFalse(Notification.get_unsent())
 
     def test_get_index_in_group(self):
-        with self.subTest('Ok'):
-            group = NotificationGroup.add(name='test group 1', max_number=10)
+        with self.subTest("Ok"):
+            group = NotificationGroup.add(name="test group 1", max_number=10)
 
             notifications = [
                 Notification.add(
                     chat_id=1,
-                    name='test',
-                    message=f'message #{i}',
+                    name="test",
+                    message=f"message #{i}",
                     group=group,
                 )
                 for i in range(group.max_number)
@@ -287,20 +284,20 @@ class TestDbNotification(unittest.TestCase):
                 idx = notify.get_index_in_group()
                 self.assertEqual(notify, notify.group.get_notification(idx))
 
-        with self.subTest('Without group'):
+        with self.subTest("Without group"):
             notify = Notification.add(
                 chat_id=1,
-                name='test',
-                message=f'message',
+                name="test",
+                message=f"message",
             )
             self.assertEqual(-1, notify.get_index_in_group())
 
     def test_get_html(self):
         chat_id = 123
-        name = 'test'
-        message = 'message 1'
+        name = "test"
+        message = "message 1"
 
-        with self.subTest('show_type=True'):
+        with self.subTest("show_type=True"):
             notify = Notification.add(
                 chat_id=chat_id,
                 name=name,
@@ -313,7 +310,7 @@ class TestDbNotification(unittest.TestCase):
             self.assertIn(notify.name, text)
             self.assertIn(notify.message, text)
 
-        with self.subTest('show_type=False'):
+        with self.subTest("show_type=False"):
             notify = Notification.add(
                 chat_id=chat_id,
                 name=name,
@@ -328,10 +325,10 @@ class TestDbNotification(unittest.TestCase):
 
     def test_is_first_in_group(self):
         chat_id = 123
-        name = 'test'
-        message = 'message 1'
+        name = "test"
+        message = "message 1"
 
-        group_name = 'group 1'
+        group_name = "group 1"
         group_max_number = 3
 
         items = [
@@ -356,5 +353,5 @@ class TestDbNotification(unittest.TestCase):
         self.assertFalse(notify_without_group.is_first_in_group())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

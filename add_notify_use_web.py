@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 import time
@@ -12,28 +12,28 @@ from common import TypeEnum
 from config import HOST, PORT
 
 
-URL = f'http://{HOST}:{PORT}/add_notify'
+URL = f"http://{HOST}:{PORT}/add_notify"
 
 
 def add_notify(
-        name: str,
-        message: str,
-        type: TypeEnum | str = TypeEnum.INFO,
-        url: str = None,
-        has_delete_button: bool = False,
-        show_type: bool = True,
-        group: str = None,
-        group_max_number: int = None,
+    name: str,
+    message: str,
+    type: TypeEnum | str = TypeEnum.INFO,
+    url: str = None,
+    has_delete_button: bool = False,
+    show_type: bool = True,
+    group: str = None,
+    group_max_number: int = None,
 ):
     data = {
-        'name': name,
-        'message': message,
-        'type': type.value,
-        'url': url,
-        'has_delete_button': has_delete_button,
-        'show_type': show_type,
-        'group': group,
-        'group_max_number': group_max_number,
+        "name": name,
+        "message": message,
+        "type": type.value,
+        "url": url,
+        "has_delete_button": has_delete_button,
+        "show_type": show_type,
+        "group": group,
+        "group_max_number": group_max_number,
     }
 
     # Попытки
@@ -54,13 +54,18 @@ def add_notify(
             time.sleep(timeout)
 
 
-if __name__ == '__main__':
-    add_notify('TEST', 'Hello World! Привет мир!')
-    add_notify('', 'Hello World! Привет мир!')
-    add_notify('Ошибка!', 'Hello World! Привет мир!', TypeEnum.ERROR)
-    add_notify('TEST', 'With url-button!', url='https://example.com/')
-    add_notify('TEST', 'With delete-button!', has_delete_button=True)
-    add_notify('TEST', 'With url and delete buttons!', url='https://example.com/', has_delete_button=True)
+if __name__ == "__main__":
+    add_notify("TEST", "Hello World! Привет мир!")
+    add_notify("", "Hello World! Привет мир!")
+    add_notify("Ошибка!", "Hello World! Привет мир!", TypeEnum.ERROR)
+    add_notify("TEST", "With url-button!", url="https://example.com/")
+    add_notify("TEST", "With delete-button!", has_delete_button=True)
+    add_notify(
+        "TEST",
+        "With url and delete buttons!",
+        url="https://example.com/",
+        has_delete_button=True,
+    )
 
-    add_notify('TEST', '#1. Group 1!', group='group 1', group_max_number=2)
-    add_notify('TEST', '#2. Group 1!', group='group 1', group_max_number=2)
+    add_notify("TEST", "#1. Group 1!", group="group 1", group_max_number=2)
+    add_notify("TEST", "#2. Group 1!", group="group 1", group_max_number=2)

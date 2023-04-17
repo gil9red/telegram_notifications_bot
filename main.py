@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 import os
@@ -13,7 +13,13 @@ from threading import Thread
 # pip install python-telegram-bot
 from telegram import Update, Bot, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
-    Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters, CallbackContext, Defaults
+    Updater,
+    MessageHandler,
+    CommandHandler,
+    CallbackQueryHandler,
+    Filters,
+    CallbackContext,
+    Defaults,
 )
 from telegram.error import BadRequest
 
@@ -24,8 +30,10 @@ from config import MESS_MAX_LENGTH, INLINE_BUTTON_TEXT_URL, INLINE_BUTTON_TEXT_D
 from common import get_logger, log_func, reply_error, TypeEnum
 from regexp_patterns import (
     fill_string_pattern,
-    PATTERN_NOTIFICATION_PAGE, PATTERN_DELETE_MESSAGE,
-    COMMAND_START, COMMAND_SHOW_NOTIFICATION_COUNT
+    PATTERN_NOTIFICATION_PAGE,
+    PATTERN_DELETE_MESSAGE,
+    COMMAND_START,
+    COMMAND_SHOW_NOTIFICATION_COUNT,
 )
 from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
@@ -39,13 +47,12 @@ def get_int_from_match(match: re.Match, name: str, default: int = None) -> int:
 
 
 DATA = {
-    'BOT': None,
-    'IS_WORKING': True,
+    "BOT": None,
+    "IS_WORKING": True,
 }
 
 INLINE_BUTTON_DELETE = InlineKeyboardButton(
-    INLINE_BUTTON_TEXT_DELETE,
-    callback_data=PATTERN_DELETE_MESSAGE
+    INLINE_BUTTON_TEXT_DELETE, callback_data=PATTERN_DELETE_MESSAGE
 )
 
 
@@ -59,9 +66,7 @@ def get_chat_id(update: Update) -> int:
 def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton]:
     buttons = []
     if notify.url:
-        buttons.append(
-            InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url)
-        )
+        buttons.append(InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url))
     if notify.has_delete_button:
         buttons.append(INLINE_BUTTON_DELETE)
 
@@ -69,9 +74,9 @@ def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton
 
 
 def get_paginator_for_notify(
-        notify: db.Notification,
-        buttons: list[InlineKeyboardButton],
-        pattern = PATTERN_NOTIFICATION_PAGE,
+    notify: db.Notification,
+    buttons: list[InlineKeyboardButton],
+    pattern=PATTERN_NOTIFICATION_PAGE,
 ) -> InlineKeyboardPaginator:
     page = notify.get_index_in_group() + 1
     total = notify.group.get_total_notifications()
@@ -79,7 +84,7 @@ def get_paginator_for_notify(
     paginator = InlineKeyboardPaginator(
         page_count=total,
         current_page=page,
-        data_pattern=fill_string_pattern(pattern, '{page}', notify.group.id)
+        data_pattern=fill_string_pattern(pattern, "{page}", notify.group.id),
     )
     if buttons:
         paginator.add_before(*buttons)
@@ -88,16 +93,16 @@ def get_paginator_for_notify(
 
 
 def send_notify(
-        bot: Bot,
-        notify: db.Notification,
-        reply_markup: str | None,
-        chat_id: int = config.CHAT_ID,
-        as_new_message: bool = True,
-        message_id: int = None,
+    bot: Bot,
+    notify: db.Notification,
+    reply_markup: str | None,
+    chat_id: int = config.CHAT_ID,
+    as_new_message: bool = True,
+    message_id: int = None,
 ):
     text = notify.get_html()
     if len(text) > MESS_MAX_LENGTH:
-        text = text[:MESS_MAX_LENGTH - 3] + '...'
+        text = text[: MESS_MAX_LENGTH - 3] + "..."
 
     parse_mode = ParseMode.HTML
 
@@ -106,7 +111,7 @@ def send_notify(
             chat_id=chat_id,
             text=text,
             parse_mode=parse_mode,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
         )
         notify.set_as_send()
     else:
@@ -115,20 +120,20 @@ def send_notify(
             message_id=message_id,
             text=text,
             parse_mode=parse_mode,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
         )
 
 
 def sending_notifications():
     while True:
-        bot: Bot | None = DATA['BOT']
+        bot: Bot | None = DATA["BOT"]
         if not bot or not config.CHAT_ID:
             continue
 
         try:
             for notify in db.Notification.get_unsent():
                 # Пауза, если IS_WORKING = False
-                while not DATA['IS_WORKING']:
+                while not DATA["IS_WORKING"]:
                     time.sleep(0.001)
                     continue
 
@@ -151,22 +156,24 @@ def sending_notifications():
                     reply_markup = paginator.markup
 
                 else:
-                    reply_markup = InlineKeyboardMarkup.from_row(buttons) if buttons else None
+                    reply_markup = (
+                        InlineKeyboardMarkup.from_row(buttons) if buttons else None
+                    )
 
                 send_notify(bot, notify, reply_markup)
 
                 time.sleep(1)
 
         except Exception as e:
-            log.exception('')
+            log.exception("")
 
             if config.CHAT_ID:
-                text = f'⚠ При отправке уведомления возникла ошибка: {e}'
+                text = f"⚠ При отправке уведомления возникла ошибка: {e}"
 
                 try:
                     bot.send_message(config.CHAT_ID, text)
                 except Exception:
-                    log.exception('Ошибка при отправке уведомления об ошибке')
+                    log.exception("Ошибка при отправке уведомления об ошибке")
 
                 time.sleep(60)
 
@@ -177,7 +184,7 @@ def sending_notifications():
 @log_func(log)
 def on_start(update: Update, _: CallbackContext):
     if not config.CHAT_ID:
-        update.effective_message.reply_text('Введите что-нибудь для получения chat_id')
+        update.effective_message.reply_text("Введите что-нибудь для получения chat_id")
 
 
 @log_func(log)
@@ -186,7 +193,10 @@ def on_show_notification_count(update: Update, _: CallbackContext):
     chat_id = get_chat_id(update)
     count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
 
-    message.reply_text(f'{TypeEnum.INFO.emoji} Отправлено уведомлений: {count}', quote=True)
+    message.reply_text(
+        f"{TypeEnum.INFO.emoji} Отправлено уведомлений: {count}",
+        quote=True,
+    )
 
 
 @log_func(log)
@@ -204,8 +214,8 @@ def on_change_notification_page(update: Update, context: CallbackContext):
     if query:
         query.answer()
 
-    page = get_int_from_match(context.match, 'page')
-    by_group_id = get_int_from_match(context.match, 'group_id')
+    page = get_int_from_match(context.match, "page")
+    by_group_id = get_int_from_match(context.match, "group_id")
 
     group: db.NotificationGroup = db.NotificationGroup.get_by_id(by_group_id)
     notify = group.get_notification(page - 1)
@@ -224,10 +234,10 @@ def on_change_notification_page(update: Update, context: CallbackContext):
             notify,
             reply_markup,
             as_new_message=False,
-            message_id=update.effective_message.message_id
+            message_id=update.effective_message.message_id,
         )
     except BadRequest as e:
-        if 'Message is not modified' in str(e):
+        if "Message is not modified" in str(e):
             return
 
         raise e
@@ -241,21 +251,21 @@ def on_request(update: Update, _: CallbackContext):
 
     # Если чат не задан
     if not config.CHAT_ID:
-        text = f'CHAT_ID: {chat_id}'
+        text = f"CHAT_ID: {chat_id}"
     elif chat_id == config.CHAT_ID:
         command = message.text.lower()
-        if command == 'start':
-            DATA['IS_WORKING'] = True
-        elif command == 'stop':
-            DATA['IS_WORKING'] = False
+        if command == "start":
+            DATA["IS_WORKING"] = True
+        elif command == "stop":
+            DATA["IS_WORKING"] = False
 
-        is_working = DATA['IS_WORKING']
+        is_working = DATA["IS_WORKING"]
         text = (
-            f'Поддерживаемые команды: <b>start</b>, <b>stop</b>\n'
-            f'Рассылка уведомлений: <b>' + ('запущена' if is_working else 'остановлена') + '</b>'
+            f"Поддерживаемые команды: <b>start</b>, <b>stop</b>\n"
+            f"Рассылка уведомлений: <b>" + ("запущена" if is_working else "остановлена") + "</b>"
         )
     else:
-        text = 'Этот чат не имеет доступа к функциям бота'
+        text = "Этот чат не имеет доступа к функциям бота"
 
     message.reply_html(text)
 
@@ -265,12 +275,12 @@ def on_error(update: Update, context: CallbackContext):
 
 
 def main():
-    log.debug('Start')
+    log.debug("Start")
 
     cpu_count = os.cpu_count()
     workers = cpu_count
-    log.debug(f'System: CPU_COUNT={cpu_count}, WORKERS={workers}')
-    log.debug(f'CHAT_ID={config.CHAT_ID}')
+    log.debug(f"System: CPU_COUNT={cpu_count}, WORKERS={workers}")
+    log.debug(f"CHAT_ID={config.CHAT_ID}")
 
     updater = Updater(
         config.TOKEN,
@@ -278,16 +288,24 @@ def main():
         defaults=Defaults(run_async=True),
     )
     bot = updater.bot
-    log.debug(f'Bot name {bot.first_name!r} ({bot.name})')
+    log.debug(f"Bot name {bot.first_name!r} ({bot.name})")
 
-    DATA['BOT'] = bot
+    DATA["BOT"] = bot
 
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler(COMMAND_START, on_start))
-    dp.add_handler(CommandHandler(COMMAND_SHOW_NOTIFICATION_COUNT, on_show_notification_count))
-    dp.add_handler(CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE))
-    dp.add_handler(CallbackQueryHandler(on_change_notification_page, pattern=PATTERN_NOTIFICATION_PAGE))
+    dp.add_handler(
+        CommandHandler(COMMAND_SHOW_NOTIFICATION_COUNT, on_show_notification_count)
+    )
+    dp.add_handler(
+        CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE)
+    )
+    dp.add_handler(
+        CallbackQueryHandler(
+            on_change_notification_page, pattern=PATTERN_NOTIFICATION_PAGE
+        )
+    )
     dp.add_handler(MessageHandler(Filters.text, on_request))
 
     dp.add_error_handler(on_error)
@@ -295,18 +313,18 @@ def main():
     updater.start_polling()
     updater.idle()
 
-    log.debug('Finish')
+    log.debug("Finish")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Thread(target=sending_notifications).start()
 
     while True:
         try:
             main()
         except:
-            log.exception('')
+            log.exception("")
 
             timeout = 15
-            log.info(f'Restarting the bot after {timeout} seconds')
+            log.info(f"Restarting the bot after {timeout} seconds")
             time.sleep(timeout)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 # pip install aiohttp
@@ -16,21 +16,21 @@ routes = web.RouteTableDef()
 
 
 def process_notify(data: dict):
-    name = data['name']
-    message = data['message']
-    type = data.get('type', TypeEnum.INFO)
-    url = data.get('url')
+    name = data["name"]
+    message = data["message"]
+    type = data.get("type", TypeEnum.INFO)
+    url = data.get("url")
 
-    has_delete_button = data.get('has_delete_button', False)  # Из json поле будет булевым
+    has_delete_button = data.get("has_delete_button", False)  # Из json поле будет булевым
     if isinstance(has_delete_button, str):
-        has_delete_button = has_delete_button == 'true'
+        has_delete_button = has_delete_button == "true"
 
-    show_type = data.get('show_type', True)  # Из json поле будет булевым
+    show_type = data.get("show_type", True)  # Из json поле будет булевым
     if isinstance(show_type, str):
-        show_type = show_type == 'true'
+        show_type = show_type == "true"
 
-    group = data.get('group')
-    group_max_number = data.get('group_max_number')
+    group = data.get("group")
+    group_max_number = data.get("group_max_number")
     if group_max_number and not isinstance(group_max_number, int):
         group_max_number = int(group_max_number)
 
@@ -46,7 +46,7 @@ def process_notify(data: dict):
     )
 
 
-@routes.get('/')
+@routes.get("/")
 async def index(_: web.Request):
     text = """
 <form action="/add_notify" method="post" accept-charset="utf-8"
@@ -112,30 +112,27 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
     """
 
-    return web.Response(text=text, content_type='text/html')
+    return web.Response(text=text, content_type="text/html")
 
 
-@routes.post('/add_notify')
+@routes.post("/add_notify")
 async def add_notify_handler(request: web.Request):
     try:
         data = await request.post()
         if not data:
             data = await request.json()
 
-        print(f'[add_notify] data: {data}')
+        print(f"[add_notify] data: {data}")
         process_notify(data)
 
-        return web.json_response({'ok': True})
+        return web.json_response({"ok": True})
 
     except Exception as e:
-        return web.json_response({'error': str(e)})
+        return web.json_response({"error": str(e)})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = web.Application()
     app.add_routes(routes)
 
-    web.run_app(
-        app,
-        host=HOST, port=PORT
-    )
+    web.run_app(app, host=HOST, port=PORT)

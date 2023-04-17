@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 import datetime as DT
@@ -13,7 +13,13 @@ from typing import Any, Type, Optional
 
 # pip install peewee
 from peewee import (
-    Model, TextField, ForeignKeyField, DateTimeField, CharField, IntegerField, BooleanField
+    Model,
+    TextField,
+    ForeignKeyField,
+    DateTimeField,
+    CharField,
+    IntegerField,
+    BooleanField,
 )
 from playhouse.sqliteq import SqliteQueueDatabase
 
@@ -28,9 +34,9 @@ from third_party.shorten import shorten
 db = SqliteQueueDatabase(
     DB_FILE_NAME,
     pragmas={
-        'foreign_keys': 1,
-        'journal_mode': 'wal',    # WAL-mode
-        'cache_size': -1024 * 64  # 64MB page-cache
+        "foreign_keys": 1,
+        "journal_mode": "wal",     # WAL-mode
+        "cache_size": -1024 * 64,  # 64MB page-cache
     },
     use_gevent=False,     # Use the standard library "threading" module.
     autostart=True,
@@ -64,7 +70,7 @@ class BaseModel(Model):
         database = db
 
     @classmethod
-    def get_inherited_models(cls) -> list[Type['BaseModel']]:
+    def get_inherited_models(cls) -> list[Type["BaseModel"]]:
         return sorted(cls.__subclasses__(), key=lambda x: x.__name__)
 
     @classmethod
@@ -73,9 +79,9 @@ class BaseModel(Model):
         for sub_cls in cls.get_inherited_models():
             name = sub_cls.__name__
             count = sub_cls.select().count()
-            items.append(f'{name}: {count}')
+            items.append(f"{name}: {count}")
 
-        print(', '.join(items))
+        print(", ".join(items))
 
     def __str__(self):
         fields = []
@@ -90,13 +96,13 @@ class BaseModel(Model):
                     v = repr(shorten(v))
 
             elif isinstance(field, ForeignKeyField):
-                k = f'{k}_id'
+                k = f"{k}_id"
                 if v:
                     v = v.id
 
-            fields.append(f'{k}={v}')
+            fields.append(f"{k}={v}")
 
-        return self.__class__.__name__ + '(' + ', '.join(fields) + ')'
+        return self.__class__.__name__ + "(" + ", ".join(fields) + ")"
 
 
 class NotificationGroup(BaseModel):
@@ -104,19 +110,21 @@ class NotificationGroup(BaseModel):
     max_number = IntegerField()
 
     @classmethod
-    def get_by(cls, name: str) -> Optional['NotificationGroup']:
+    def get_by(cls, name: str) -> Optional["NotificationGroup"]:
         return cls.get_or_none(name=name)
 
     @classmethod
     def add(
-            cls,
-            name: str,
-            max_number: int = None,
-    ) -> Optional['NotificationGroup']:
+        cls,
+        name: str,
+        max_number: int = None,
+    ) -> Optional["NotificationGroup"]:
         obj = cls.get_by(name)
         if not obj:
             if not max_number:
-                raise Exception('Значение max_number для новой NotificationGroup должно быть задано!')
+                raise Exception(
+                    "Значение max_number для новой NotificationGroup должно быть задано!"
+                )
 
             # Нет смысла создавать группу для 1 или меньше элементов
             if max_number <= 1:
@@ -134,7 +142,7 @@ class NotificationGroup(BaseModel):
     def is_complete(self) -> bool:
         return self.get_total_notifications() >= self.max_number
 
-    def get_notification(self, idx: int = 0) -> Optional['Notification']:
+    def get_notification(self, idx: int = 0) -> Optional["Notification"]:
         items: list[Notification] = list(self.notifications)
         try:
             return items[idx]
@@ -152,21 +160,23 @@ class Notification(BaseModel):
     show_type = BooleanField(default=True)
     append_datetime = DateTimeField(default=DT.datetime.now)
     sending_datetime = DateTimeField(null=True)
-    group: NotificationGroup = ForeignKeyField(NotificationGroup, null=True, backref='notifications')
+    group: NotificationGroup = ForeignKeyField(
+        NotificationGroup, null=True, backref="notifications"
+    )
 
     @classmethod
     def add(
-            cls,
-            chat_id: int,
-            name: str,
-            message: str,
-            type: TypeEnum = TypeEnum.INFO,
-            url: str = None,
-            has_delete_button: bool = False,
-            show_type: bool = True,
-            group: NotificationGroup | str = None,
-            group_max_number: int = None,
-    ) -> 'Notification':
+        cls,
+        chat_id: int,
+        name: str,
+        message: str,
+        type: TypeEnum = TypeEnum.INFO,
+        url: str = None,
+        has_delete_button: bool = False,
+        show_type: bool = True,
+        group: NotificationGroup | str = None,
+        group_max_number: int = None,
+    ) -> "Notification":
         if isinstance(url, str) and not url.strip():
             url = None
 
@@ -181,8 +191,8 @@ class Notification(BaseModel):
             number = group.get_total_notifications()
             if group.max_number <= number:
                 raise Exception(
-                    f'Количество уведомлений {number} в группе {group} '
-                    f'превысило максимальное количество {group.max_number}'
+                    f"Количество уведомлений {number} в группе {group} "
+                    f"превысило максимальное количество {group.max_number}"
                 )
 
         # Явно задаем отсутствие группы (например, будет проблема, если в group попадет пустая строка)
@@ -201,7 +211,7 @@ class Notification(BaseModel):
         )
 
     @classmethod
-    def get_unsent(cls) -> list['Notification']:
+    def get_unsent(cls) -> list["Notification"]:
         """
         Функция класс, что возвращает неотправленные уведомления
         """
@@ -228,20 +238,20 @@ class Notification(BaseModel):
         Функция возвращает текст для отправки запроса в формате HTML
         """
 
-        text = ''
+        text = ""
         if self.show_type:
-            text += self.type.emoji + ' '
+            text += self.type.emoji + " "
 
         name = html.escape(self.name)
         message = html.escape(self.message)
 
-        number_in_group: str = ''
+        number_in_group: str = ""
         if self.group:
             number = self.get_index_in_group() + 1
             total = self.group.get_total_notifications()
-            number_in_group = f' [{number}/{total}]'
+            number_in_group = f" [{number}/{total}]"
 
-        text += f'<b>{name}</b>{number_in_group}\n{message}'
+        text += f"<b>{name}</b>{number_in_group}\n{message}"
 
         return text.strip()
 
@@ -259,7 +269,7 @@ db.create_tables(BaseModel.get_inherited_models())
 time.sleep(0.050)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     BaseModel.print_count_of_tables()
     # Notification: 2593
 
@@ -274,12 +284,12 @@ if __name__ == '__main__':
     #     type=TypeEnum.INFO,
     # )
 
-    print('Total:', len(Notification.select()))
+    print("Total:", len(Notification.select()))
     # for x in Notification.select():
     #     print(x)
     #     print(x.get_html())
 
-    print('Unsent:', len(Notification.get_unsent()))
+    print("Unsent:", len(Notification.get_unsent()))
 
     # print()
     #

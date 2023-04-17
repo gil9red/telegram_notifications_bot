@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'ipetrash'
+__author__ = "ipetrash"
 
 
 import enum
@@ -29,23 +29,25 @@ class TypeEnum(AutoName):
     @property
     def emoji(self) -> str:
         return {
-            self.INFO: 'ℹ️',
-            self.ERROR: '⚠️',
+            self.INFO: "ℹ️",
+            self.ERROR: "⚠️",
         }[self]
 
 
-def get_logger(file_name: str, dir_name='logs'):
+def get_logger(file_name: str, dir_name="logs"):
     dir_name = Path(dir_name).resolve()
     dir_name.mkdir(parents=True, exist_ok=True)
 
-    file_name = str(dir_name / Path(file_name).resolve().name) + '.log'
+    file_name = str(dir_name / Path(file_name).resolve().name) + ".log"
 
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('[%(asctime)s] %(filename)s[LINE:%(lineno)d] %(levelname)-8s %(message)s')
+    formatter = logging.Formatter(
+        "[%(asctime)s] %(filename)s[LINE:%(lineno)d] %(levelname)-8s %(message)s"
+    )
 
-    fh = logging.FileHandler(file_name, encoding='utf-8')
+    fh = logging.FileHandler(file_name, encoding="utf-8")
     fh.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler(stream=sys.stdout)
@@ -80,17 +82,19 @@ def log_func(log: logging.Logger):
                 try:
                     message = update.effective_message.text
                 except:
-                    message = ''
+                    message = ""
 
                 try:
                     query_data = update.callback_query.data
                 except:
-                    query_data = ''
+                    query_data = ""
 
-                msg = f'[chat_id={chat_id}, user_id={user_id}, ' \
-                      f'first_name={first_name!r}, last_name={last_name!r}, ' \
-                      f'username={username!r}, language_code={language_code}, ' \
-                      f'message={message!r}, query_data={query_data!r}]'
+                msg = (
+                    f"[chat_id={chat_id}, user_id={user_id}, "
+                    f"first_name={first_name!r}, last_name={last_name!r}, "
+                    f"username={username!r}, language_code={language_code}, "
+                    f"message={message!r}, query_data={query_data!r}]"
+                )
                 msg = func.__name__ + msg
 
                 log.debug(msg)
@@ -98,10 +102,11 @@ def log_func(log: logging.Logger):
             return func(update, context)
 
         return wrapper
+
     return actual_decorator
 
 
 def reply_error(log: logging.Logger, update: Update, context: CallbackContext):
-    log.error('Error: %s\nUpdate: %s', context.error, update, exc_info=context.error)
+    log.error("Error: %s\nUpdate: %s", context.error, update, exc_info=context.error)
     if update:
         update.effective_message.reply_text(config.ERROR_TEXT)
