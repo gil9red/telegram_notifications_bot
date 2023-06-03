@@ -211,12 +211,13 @@ def on_start(update: Update, _: CallbackContext):
     if not USER_ID:
         text = f"USER_ID: {user_id}"
     elif is_admin(user_id):
-        text = (
-            "Команды:"
-            f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений"
-            f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений"
-            f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений"
+        lines = (
+            "Команды:",
+            f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений",
+            f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений",
+            f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений",
         )
+        text = "\n".join(lines)
     else:
         text = MESSAGE_ACCESS_DENIED
 
