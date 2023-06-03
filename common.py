@@ -106,7 +106,42 @@ def log_func(log: logging.Logger):
     return actual_decorator
 
 
+def get_user_id(update: Update) -> int | None:
+    if update.effective_user:
+        return update.effective_user.id
+
+
+def is_admin(user_id: int) -> bool:
+    return user_id == config.USER_ID
+
+
+def access_check(log: logging.Logger):
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper(update: Update, context: CallbackContext):
+            message = update.message
+
+            user_id = get_user_id(update)
+            if not user_id:
+                text = config.MESSAGE_ALLOWED_FOR_USERS_ONLY
+                log.info(text)
+                message.reply_text(text)
+                return
+
+            if not is_admin(user_id):
+                text = config.MESSAGE_ACCESS_DENIED
+                log.info(text)
+                message.reply_text(text)
+                return
+
+            return func(update, context)
+
+        return wrapper
+
+    return actual_decorator
+
+
 def reply_error(log: logging.Logger, update: Update, context: CallbackContext):
     log.error("Error: %s\nUpdate: %s", context.error, update, exc_info=context.error)
     if update:
-        update.effective_message.reply_text(config.ERROR_TEXT)
+        update.effective_message.reply_text(config.MESSAGE_ERROR_TEXT)

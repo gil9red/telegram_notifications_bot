@@ -14,14 +14,12 @@ DIR = Path(__file__).resolve().parent
 TOKEN_PATH = DIR / "TOKEN.txt"
 TOKEN = os.environ.get("TOKEN") or TOKEN_PATH.read_text("utf-8").strip()
 
-CHAT_ID_PATH = DIR / "CHAT_ID.txt"
-CHAT_ID: int | None = None
+USER_ID_PATH = DIR / "USER_ID.txt"
+USER_ID: int | None = None
 try:
-    CHAT_ID = int(os.environ.get("CHAT_ID") or CHAT_ID_PATH.read_text("utf-8").strip())
+    USER_ID = int(os.environ.get("USER_ID") or USER_ID_PATH.read_text("utf-8").strip())
 except:
     pass
-
-ERROR_TEXT = "Возникла какая-то проблема. Попробуйте повторить запрос или попробовать чуть позже..."
 
 # Создание папки для базы данных
 DB_DIR_NAME = DIR / "database"
@@ -37,3 +35,8 @@ MESS_MAX_LENGTH = 4096
 
 INLINE_BUTTON_TEXT_URL = "🔗 Открыть ссылку"
 INLINE_BUTTON_TEXT_DELETE = "❌ Удалить"
+
+MESSAGE_UNKNOWN_COMMAND = "Неизвестная команда"
+MESSAGE_ACCESS_DENIED = "Этот чат не имеет доступа к функциям бота"
+MESSAGE_ALLOWED_FOR_USERS_ONLY = "Разрешено только для пользователей"
+MESSAGE_ERROR_TEXT = "Возникла какая-то проблема. Попробуйте повторить запрос или попробовать чуть позже..."

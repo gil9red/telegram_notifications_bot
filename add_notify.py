@@ -5,7 +5,7 @@ __author__ = "ipetrash"
 
 
 from db import Notification
-from config import CHAT_ID
+from config import USER_ID, USER_ID_PATH
 from common import TypeEnum
 
 
@@ -19,14 +19,14 @@ def add_notify(
     group: str = None,
     group_max_number: int = None,
 ):
-    if not CHAT_ID:
-        raise Exception('Нужно заполнить "CHAT_ID.txt"!')
+    if not USER_ID:
+        raise Exception(f'Нужно заполнить "{USER_ID_PATH.name}"!')
 
     if not isinstance(type, TypeEnum):
         type = TypeEnum[type]
 
     Notification.add(
-        chat_id=CHAT_ID,
+        chat_id=USER_ID,
         name=name,
         message=message,
         type=type,

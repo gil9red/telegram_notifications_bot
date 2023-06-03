@@ -15,7 +15,12 @@ PATTERN_NOTIFICATION_PAGE = re.compile(
 PATTERN_DELETE_MESSAGE = "delete_message"
 
 COMMAND_START = "start"
+COMMAND_HELP = "help"
+
 COMMAND_SHOW_NOTIFICATION_COUNT = "show_notification_count"
+
+COMMAND_START_NOTIFICATION = "start_notification"
+COMMAND_STOP_NOTIFICATION = "stop_notification"
 
 
 if __name__ == "__main__":

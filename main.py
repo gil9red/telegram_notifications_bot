@@ -23,17 +23,35 @@ from telegram.ext import (
 )
 from telegram.error import BadRequest
 
-import config
 import db
 
-from config import MESS_MAX_LENGTH, INLINE_BUTTON_TEXT_URL, INLINE_BUTTON_TEXT_DELETE
-from common import get_logger, log_func, reply_error, TypeEnum
+from config import (
+    MESS_MAX_LENGTH,
+    INLINE_BUTTON_TEXT_URL,
+    INLINE_BUTTON_TEXT_DELETE,
+    MESSAGE_ACCESS_DENIED,
+    MESSAGE_UNKNOWN_COMMAND,
+    USER_ID,
+    TOKEN,
+)
+from common import (
+    get_logger,
+    log_func,
+    access_check,
+    reply_error,
+    TypeEnum,
+    get_user_id,
+    is_admin,
+)
 from regexp_patterns import (
     fill_string_pattern,
     PATTERN_NOTIFICATION_PAGE,
     PATTERN_DELETE_MESSAGE,
     COMMAND_START,
+    COMMAND_HELP,
     COMMAND_SHOW_NOTIFICATION_COUNT,
+    COMMAND_START_NOTIFICATION,
+    COMMAND_STOP_NOTIFICATION,
 )
 from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
@@ -57,10 +75,6 @@ INLINE_BUTTON_DELETE = InlineKeyboardButton(
 
 
 log = get_logger(__file__)
-
-
-def get_chat_id(update: Update) -> int:
-    return update.effective_chat.id
 
 
 def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton]:
@@ -96,7 +110,7 @@ def send_notify(
     bot: Bot,
     notify: db.Notification,
     reply_markup: str | None,
-    chat_id: int = config.CHAT_ID,
+    chat_id: int = USER_ID,
     as_new_message: bool = True,
     message_id: int = None,
 ):
@@ -127,7 +141,7 @@ def send_notify(
 def sending_notifications():
     while True:
         bot: Bot | None = DATA["BOT"]
-        if not bot or not config.CHAT_ID:
+        if not bot or not USER_ID:
             continue
 
         try:
@@ -167,11 +181,11 @@ def sending_notifications():
         except Exception as e:
             log.exception("")
 
-            if config.CHAT_ID:
+            if USER_ID:
                 text = f"⚠ При отправке уведомления возникла ошибка: {e}"
 
                 try:
-                    bot.send_message(config.CHAT_ID, text)
+                    bot.send_message(USER_ID, text)
                 except Exception:
                     log.exception("Ошибка при отправке уведомления об ошибке")
 
@@ -181,22 +195,59 @@ def sending_notifications():
             time.sleep(1)
 
 
+def reply_sending_notification_status(update: Update):
+    text = (
+        f"Рассылка уведомлений: <b>"
+        + ("запущена" if DATA["IS_WORKING"] else "остановлена")
+        + "</b>"
+    )
+    update.effective_message.reply_html(text)
+
+
 @log_func(log)
 def on_start(update: Update, _: CallbackContext):
-    if not config.CHAT_ID:
-        update.effective_message.reply_text("Введите что-нибудь для получения chat_id")
+    user_id = get_user_id(update)
+
+    if not USER_ID:
+        text = f"USER_ID: {user_id}"
+    elif is_admin(user_id):
+        text = (
+            "Команды:"
+            f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений"
+            f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений"
+            f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений"
+        )
+    else:
+        text = MESSAGE_ACCESS_DENIED
+
+    update.effective_message.reply_text(text)
 
 
 @log_func(log)
+@access_check(log)
 def on_show_notification_count(update: Update, _: CallbackContext):
     message = update.effective_message
-    chat_id = get_chat_id(update)
+    chat_id = get_user_id(update)
     count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
 
     message.reply_text(
         f"{TypeEnum.INFO.emoji} Отправлено уведомлений: {count}",
         quote=True,
     )
+
+
+@log_func(log)
+@access_check(log)
+def on_start_notification(update: Update, _: CallbackContext):
+    DATA["IS_WORKING"] = True
+    reply_sending_notification_status(update)
+
+
+@log_func(log)
+@access_check(log)
+def on_stop_notification(update: Update, _: CallbackContext):
+    DATA["IS_WORKING"] = False
+    reply_sending_notification_status(update)
 
 
 @log_func(log)
@@ -246,28 +297,7 @@ def on_change_notification_page(update: Update, context: CallbackContext):
 @log_func(log)
 def on_request(update: Update, _: CallbackContext):
     message = update.effective_message
-
-    chat_id = get_chat_id(update)
-
-    # Если чат не задан
-    if not config.CHAT_ID:
-        text = f"CHAT_ID: {chat_id}"
-    elif chat_id == config.CHAT_ID:
-        command = message.text.lower()
-        if command == "start":
-            DATA["IS_WORKING"] = True
-        elif command == "stop":
-            DATA["IS_WORKING"] = False
-
-        is_working = DATA["IS_WORKING"]
-        text = (
-            f"Поддерживаемые команды: <b>start</b>, <b>stop</b>\n"
-            f"Рассылка уведомлений: <b>" + ("запущена" if is_working else "остановлена") + "</b>"
-        )
-    else:
-        text = "Этот чат не имеет доступа к функциям бота"
-
-    message.reply_html(text)
+    message.reply_text(MESSAGE_UNKNOWN_COMMAND)
 
 
 def on_error(update: Update, context: CallbackContext):
@@ -280,10 +310,10 @@ def main():
     cpu_count = os.cpu_count()
     workers = cpu_count
     log.debug(f"System: CPU_COUNT={cpu_count}, WORKERS={workers}")
-    log.debug(f"CHAT_ID={config.CHAT_ID}")
+    log.debug(f"USER_ID={USER_ID}")
 
     updater = Updater(
-        config.TOKEN,
+        TOKEN,
         workers=workers,
         defaults=Defaults(run_async=True),
     )
@@ -295,9 +325,15 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler(COMMAND_START, on_start))
+    dp.add_handler(CommandHandler(COMMAND_HELP, on_start))
+
     dp.add_handler(
         CommandHandler(COMMAND_SHOW_NOTIFICATION_COUNT, on_show_notification_count)
     )
+
+    dp.add_handler(CommandHandler(COMMAND_START_NOTIFICATION, on_start_notification))
+    dp.add_handler(CommandHandler(COMMAND_STOP_NOTIFICATION, on_stop_notification))
+
     dp.add_handler(
         CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE)
     )
