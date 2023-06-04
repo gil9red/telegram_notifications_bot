@@ -296,6 +296,7 @@ def on_change_notification_page(update: Update, context: CallbackContext):
 
 
 @log_func(log)
+@access_check(log)
 def on_request(update: Update, _: CallbackContext):
     message = update.effective_message
     message.reply_text(MESSAGE_UNKNOWN_COMMAND)
