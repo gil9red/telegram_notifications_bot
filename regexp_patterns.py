@@ -22,6 +22,12 @@ COMMAND_SHOW_NOTIFICATION_COUNT = "show_notification_count"
 COMMAND_START_NOTIFICATION = "start_notification"
 COMMAND_STOP_NOTIFICATION = "stop_notification"
 
+COMMAND_SEARCH = "search"
+PATTERN_REPLY_SEARCH = re.compile(r"^Search (?P<text>.+)$", flags=re.IGNORECASE)
+PATTERN_SEARCH_PAGE = re.compile(
+    r"^notify search=(?P<search_id>\d+) page=(?P<page>\d+)$"
+)
+
 
 if __name__ == "__main__":
     print(fill_string_pattern(PATTERN_NOTIFICATION_PAGE, 1, 999_999_999))

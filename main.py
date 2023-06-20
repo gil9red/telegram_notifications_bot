@@ -52,6 +52,9 @@ from regexp_patterns import (
     COMMAND_SHOW_NOTIFICATION_COUNT,
     COMMAND_START_NOTIFICATION,
     COMMAND_STOP_NOTIFICATION,
+    COMMAND_SEARCH,
+    PATTERN_REPLY_SEARCH,
+    PATTERN_SEARCH_PAGE,
 )
 from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
@@ -90,10 +93,10 @@ def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton
 def get_paginator_for_notify(
     notify: db.Notification,
     buttons: list[InlineKeyboardButton],
-    pattern=PATTERN_NOTIFICATION_PAGE,
 ) -> InlineKeyboardPaginator:
     page = notify.get_index_in_group() + 1
     total = notify.group.get_total_notifications()
+    pattern = PATTERN_NOTIFICATION_PAGE
 
     paginator = InlineKeyboardPaginator(
         page_count=total,
@@ -106,6 +109,40 @@ def get_paginator_for_notify(
     return paginator
 
 
+def get_paginator_for_search(
+    page: int,
+    total: int,
+    search: db.Search,
+    buttons: list[InlineKeyboardButton],
+) -> InlineKeyboardPaginator:
+    pattern = PATTERN_SEARCH_PAGE
+
+    paginator = InlineKeyboardPaginator(
+        page_count=total,
+        current_page=page,
+        data_pattern=fill_string_pattern(pattern, search.id, "{page}"),
+    )
+    if buttons:
+        paginator.add_before(*buttons)
+
+    return paginator
+
+
+def get_context_value(context: CallbackContext) -> str | None:
+    value = None
+    try:
+        # Значение вытаскиваем из регулярки
+        if context.match:
+            value = context.match.group(1)
+        else:
+            # Значение из значений команды
+            value = " ".join(context.args)
+    except:
+        pass
+
+    return value
+
+
 def send_notify(
     bot: Bot,
     notify: db.Notification,
@@ -113,6 +150,7 @@ def send_notify(
     chat_id: int = USER_ID,
     as_new_message: bool = True,
     message_id: int = None,
+    reply_to_message_id: int = None,
 ):
     text = notify.get_html()
     if len(text) > MESS_MAX_LENGTH:
@@ -126,6 +164,7 @@ def send_notify(
             text=text,
             parse_mode=parse_mode,
             reply_markup=reply_markup,
+            reply_to_message_id=reply_to_message_id,
         )
         notify.set_as_send()
     else:
@@ -216,6 +255,7 @@ def on_start(update: Update, _: CallbackContext):
             f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений",
             f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений",
             f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений",
+            f" * /{COMMAND_SEARCH} или {PATTERN_REPLY_SEARCH!r} для поиска уведомлений",
         )
         text = "\n".join(lines)
     else:
@@ -249,6 +289,90 @@ def on_start_notification(update: Update, _: CallbackContext):
 def on_stop_notification(update: Update, _: CallbackContext):
     DATA["IS_WORKING"] = False
     reply_sending_notification_status(update)
+
+
+@log_func(log)
+@access_check(log)
+def on_search(update: Update, context: CallbackContext):
+    message = update.effective_message
+
+    text = get_context_value(context)
+    if not text:
+        message.reply_text(
+            f"{TypeEnum.ERROR.emoji} Не введен текст для поиска!",
+            quote=True,
+        )
+        return
+
+    search, ids = db.Notification.search(text)
+    if not search:
+        message.reply_text(
+            f"{TypeEnum.INFO.emoji} Не найдено!",
+            quote=True,
+        )
+        return
+
+    notify = db.Notification.get_by_id(ids[0])
+    buttons = get_buttons_for_notify(notify)
+
+    paginator = get_paginator_for_search(
+        page=1,
+        total=len(ids),
+        search=search,
+        buttons=buttons,
+    )
+    send_notify(
+        bot=context.bot,
+        notify=notify,
+        reply_markup=paginator.markup,
+        reply_to_message_id=message.message_id,
+    )
+
+
+@log_func(log)
+def on_callback_search_pagination(update: Update, context: CallbackContext):
+    query = update.callback_query
+    if query:
+        query.answer()
+
+    page = get_int_from_match(context.match, "page")
+    by_search_id = get_int_from_match(context.match, "search_id")
+
+    # NOTE: По сути, переход по кнопкам пагинации вызывает новый поиск
+    #       Что может увеличивать количество результатов
+    #       Обойти можно, если при первом поиске запомнить все id уведомлений
+    #       и по ним переходить в пагинаторе
+    search = db.Search.get_by_id(by_search_id)
+    _, ids = db.Notification.search(search.text)
+
+    notify = db.Notification.get_by_search(regex=search, page=page)
+    buttons = get_buttons_for_notify(notify)
+
+    paginator = get_paginator_for_search(
+        page=page,
+        total=len(ids),
+        search=search,
+        buttons=buttons,
+    )
+    reply_markup = paginator.markup
+
+    # Fix error: "telegram.error.BadRequest: Message is not modified"
+    if is_equal_inline_keyboards(reply_markup, query.message.reply_markup):
+        return
+
+    try:
+        send_notify(
+            context.bot,
+            notify,
+            reply_markup,
+            as_new_message=False,
+            message_id=update.effective_message.message_id,
+        )
+    except BadRequest as e:
+        if "Message is not modified" in str(e):
+            return
+
+        raise e
 
 
 @log_func(log)
@@ -335,6 +459,12 @@ def main():
 
     dp.add_handler(CommandHandler(COMMAND_START_NOTIFICATION, on_start_notification))
     dp.add_handler(CommandHandler(COMMAND_STOP_NOTIFICATION, on_stop_notification))
+
+    dp.add_handler(CommandHandler(COMMAND_SEARCH, on_search))
+    dp.add_handler(MessageHandler(Filters.regex(PATTERN_REPLY_SEARCH), on_search))
+    dp.add_handler(
+        CallbackQueryHandler(on_callback_search_pagination, pattern=PATTERN_SEARCH_PAGE)
+    )
 
     dp.add_handler(
         CallbackQueryHandler(on_callback_delete_message, pattern=PATTERN_DELETE_MESSAGE)

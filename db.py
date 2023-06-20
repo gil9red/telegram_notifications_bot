@@ -9,7 +9,7 @@ import enum
 import html
 import time
 
-from typing import Any, Type, Optional
+from typing import Any, Type, TypeVar, Optional, Iterable
 
 # pip install peewee
 from peewee import (
@@ -20,6 +20,7 @@ from peewee import (
     CharField,
     IntegerField,
     BooleanField,
+    Field,
 )
 from playhouse.sqliteq import SqliteQueueDatabase
 
@@ -35,13 +36,14 @@ db = SqliteQueueDatabase(
     DB_FILE_NAME,
     pragmas={
         "foreign_keys": 1,
-        "journal_mode": "wal",     # WAL-mode
+        "journal_mode": "wal",  # WAL-mode
         "cache_size": -1024 * 64,  # 64MB page-cache
     },
-    use_gevent=False,     # Use the standard library "threading" module.
+    use_gevent=False,  # Use the standard library "threading" module.
     autostart=True,
-    queue_max_size=64,    # Max. # of pending writes that can accumulate.
-    results_timeout=5.0   # Max. time to wait for query to be executed.
+    queue_max_size=64,  # Max. # of pending writes that can accumulate.
+    results_timeout=5.0,  # Max. time to wait for query to be executed.
+    regexp_function=True,
 )
 
 
@@ -65,6 +67,9 @@ class EnumField(CharField):
         return self.choices(value_enum)
 
 
+ChildModel = TypeVar("ChildModel", bound="BaseModel")
+
+
 class BaseModel(Model):
     class Meta:
         database = db
@@ -82,6 +87,25 @@ class BaseModel(Model):
             items.append(f"{name}: {count}")
 
         print(", ".join(items))
+
+    @classmethod
+    def paginating(
+        cls,
+        page: int = 1,
+        items_per_page: int = 1,
+        filters: Iterable = None,
+        order_by: Field = None,
+    ) -> list[ChildModel]:
+        query = cls.select()
+
+        if filters:
+            query = query.filter(*filters)
+
+        if order_by:
+            query = query.order_by(order_by)
+
+        query = query.paginate(page, items_per_page)
+        return list(query)
 
     def __str__(self):
         fields = []
@@ -103,6 +127,22 @@ class BaseModel(Model):
             fields.append(f"{k}={v}")
 
         return self.__class__.__name__ + "(" + ", ".join(fields) + ")"
+
+
+class Search(BaseModel):
+    text = TextField(unique=True)
+
+    @classmethod
+    def get_by(cls, text: str) -> Optional["Search"]:
+        return cls.get_or_none(text=text)
+
+    @classmethod
+    def add(cls, text: str) -> "Search":
+        obj = cls.get_by(text)
+        if not obj:
+            obj = cls.create(text=text)
+
+        return obj
 
 
 class NotificationGroup(BaseModel):
@@ -259,6 +299,38 @@ class Notification(BaseModel):
         if not self.group:
             return False
         return self == self.group.get_notification()
+
+    @classmethod
+    def __get_filter_for_search(cls, regex: str) -> Field:
+        regex = f"(?i){regex}"  # Без учета регистра
+
+        # Сложение полей и строк порождает правильное сложение данных в запросе базы
+        return (cls.name + " " + cls.message).regexp(regex)
+
+    @classmethod
+    def search(cls, regex: str) -> tuple[Search | None, list[int]]:
+        expr = cls.__get_filter_for_search(regex)
+        query = cls.select(cls.id).where(expr).order_by(cls.id)
+        items = [obj.id for obj in query]
+        search = Search.add(regex) if items else None
+        return search, items
+
+    @classmethod
+    def get_by_search(
+        cls,
+        regex: str | Search,
+        page: int = 1,
+    ) -> Optional["Notification"]:
+        if isinstance(regex, Search):
+            regex = regex.text
+
+        items = cls.paginating(
+            page=page,
+            items_per_page=1,
+            filters=[cls.__get_filter_for_search(regex)],
+            order_by=cls.id,
+        )
+        return items[0] if items else None
 
 
 db.connect()
