@@ -255,7 +255,7 @@ def on_start(update: Update, _: CallbackContext):
             f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений",
             f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений",
             f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений",
-            f" * /{COMMAND_SEARCH} или {PATTERN_REPLY_SEARCH!r} для поиска уведомлений",
+            f" * /{COMMAND_SEARCH} или {PATTERN_REPLY_SEARCH.pattern!r} для поиска уведомлений",
         )
         text = "\n".join(lines)
     else:
