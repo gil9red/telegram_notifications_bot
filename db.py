@@ -4,7 +4,7 @@
 __author__ = "ipetrash"
 
 
-import datetime as DT
+import datetime as dt
 import enum
 import html
 import time
@@ -198,7 +198,7 @@ class Notification(BaseModel):
     url = TextField(null=True)
     has_delete_button = BooleanField(default=False)
     show_type = BooleanField(default=True)
-    append_datetime = DateTimeField(default=DT.datetime.now)
+    append_datetime = DateTimeField(default=dt.datetime.now)
     sending_datetime = DateTimeField(null=True)
     group: NotificationGroup = ForeignKeyField(
         NotificationGroup, null=True, backref="notifications"
@@ -263,7 +263,7 @@ class Notification(BaseModel):
         Функция устанавливает дату отправки и сохраняет ее
         """
 
-        self.sending_datetime = DT.datetime.now()
+        self.sending_datetime = dt.datetime.now()
         self.save()
 
     def get_index_in_group(self) -> int:
