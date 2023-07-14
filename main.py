@@ -151,8 +151,13 @@ def send_notify(
     as_new_message: bool = True,
     message_id: int = None,
     reply_to_message_id: int = None,
+    add_sending_datetime: bool = False,
 ):
     text = notify.get_html()
+
+    if add_sending_datetime and notify.sending_datetime:
+        text += f"\n{notify.sending_datetime:%d/%m/%Y %H:%M:%S}"
+
     if len(text) > MESS_MAX_LENGTH:
         text = text[: MESS_MAX_LENGTH - 3] + "..."
 
@@ -326,6 +331,7 @@ def on_search(update: Update, context: CallbackContext):
         notify=notify,
         reply_markup=paginator.markup,
         reply_to_message_id=message.message_id,
+        add_sending_datetime=True,
     )
 
 
@@ -367,6 +373,7 @@ def on_callback_search_pagination(update: Update, context: CallbackContext):
             reply_markup,
             as_new_message=False,
             message_id=update.effective_message.message_id,
+            add_sending_datetime=True,
         )
     except BadRequest as e:
         if "Message is not modified" in str(e):
