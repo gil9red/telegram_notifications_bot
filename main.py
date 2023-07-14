@@ -159,7 +159,7 @@ def send_notify(
     text = notify.get_html()
 
     if add_sending_datetime and notify.sending_datetime:
-        text += f"\n{notify.sending_datetime:%d/%m/%Y %H:%M:%S}"
+        text += f"\n\n{notify.sending_datetime:%d/%m/%Y %H:%M:%S}"
 
     if len(text) > MESS_MAX_LENGTH:
         text = text[: MESS_MAX_LENGTH - 3] + "..."
