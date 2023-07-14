@@ -166,7 +166,6 @@ def send_notify(
             reply_markup=reply_markup,
             reply_to_message_id=reply_to_message_id,
         )
-        notify.set_as_send()
     else:
         bot.edit_message_text(
             chat_id=chat_id,
@@ -214,6 +213,7 @@ def sending_notifications():
                     )
 
                 send_notify(bot, notify, reply_markup)
+                notify.set_as_send()
 
                 time.sleep(1)
 
