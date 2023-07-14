@@ -80,11 +80,14 @@ INLINE_BUTTON_DELETE = InlineKeyboardButton(
 log = get_logger(__file__)
 
 
-def get_buttons_for_notify(notify: db.Notification) -> list[InlineKeyboardButton]:
+def get_buttons_for_notify(
+    notify: db.Notification,
+    allow_delete_button: bool = True,
+) -> list[InlineKeyboardButton]:
     buttons = []
     if notify.url:
         buttons.append(InlineKeyboardButton(INLINE_BUTTON_TEXT_URL, url=notify.url))
-    if notify.has_delete_button:
+    if notify.has_delete_button and allow_delete_button:
         buttons.append(INLINE_BUTTON_DELETE)
 
     return buttons
@@ -318,7 +321,7 @@ def on_search(update: Update, context: CallbackContext):
         return
 
     notify = db.Notification.get_by_id(ids[0])
-    buttons = get_buttons_for_notify(notify)
+    buttons = get_buttons_for_notify(notify, allow_delete_button=False)
 
     paginator = get_paginator_for_search(
         page=1,
@@ -352,7 +355,7 @@ def on_callback_search_pagination(update: Update, context: CallbackContext):
     _, ids = db.Notification.search(search.text)
 
     notify = db.Notification.get_by_search(regex=search, page=page)
-    buttons = get_buttons_for_notify(notify)
+    buttons = get_buttons_for_notify(notify, allow_delete_button=False)
 
     paginator = get_paginator_for_search(
         page=page,
