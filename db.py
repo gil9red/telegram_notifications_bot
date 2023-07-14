@@ -263,8 +263,9 @@ class Notification(BaseModel):
         Функция устанавливает дату отправки и сохраняет ее
         """
 
-        self.sending_datetime = dt.datetime.now()
-        self.save()
+        if not self.sending_datetime:
+            self.sending_datetime = dt.datetime.now()
+            self.save()
 
     def get_index_in_group(self) -> int:
         if self.group:
