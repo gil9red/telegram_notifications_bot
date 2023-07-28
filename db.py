@@ -6,7 +6,6 @@ __author__ = "ipetrash"
 
 import datetime as dt
 import enum
-import html
 import time
 
 from typing import Any, Type, TypeVar, Optional, Iterable
@@ -283,16 +282,13 @@ class Notification(BaseModel):
         if self.show_type:
             text += self.type.emoji + " "
 
-        name = html.escape(self.name)
-        message = html.escape(self.message)
-
         number_in_group: str = ""
         if self.group:
             number = self.get_index_in_group() + 1
             total = self.group.get_total_notifications()
             number_in_group = f" [{number}/{total}]"
 
-        text += f"<b>{name}</b>{number_in_group}\n{message}"
+        text += f"<b>{self.name}</b>{number_in_group}\n{self.message}"
 
         return text.strip()
 
