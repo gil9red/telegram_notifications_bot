@@ -28,6 +28,9 @@ PATTERN_SEARCH_PAGE = re.compile(
     r"^notify search=(?P<search_id>\d+) page=(?P<page>\d+)$"
 )
 
+COMMAND_FIND = "find"
+PATTERN_REPLY_FIND = re.compile(r"^Find (?P<text>.+)$", flags=re.IGNORECASE)
+
 
 if __name__ == "__main__":
     print(fill_string_pattern(PATTERN_NOTIFICATION_PAGE, 1, 999_999_999))

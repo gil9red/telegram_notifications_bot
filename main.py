@@ -55,6 +55,8 @@ from regexp_patterns import (
     COMMAND_SEARCH,
     PATTERN_REPLY_SEARCH,
     PATTERN_SEARCH_PAGE,
+    COMMAND_FIND,
+    PATTERN_REPLY_FIND,
 )
 from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
@@ -263,7 +265,11 @@ def on_start(update: Update, _: CallbackContext):
             f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений",
             f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений",
             f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений",
-            f" * /{COMMAND_SEARCH} или {PATTERN_REPLY_SEARCH.pattern!r} для поиска уведомлений",
+            (
+                f" * /{COMMAND_SEARCH}, /{COMMAND_FIND}, "
+                f"{PATTERN_REPLY_SEARCH.pattern!r} или"
+                f" {PATTERN_REPLY_FIND.pattern!r} для поиска уведомлений"
+            ),
         )
         text = "\n".join(lines)
     else:
@@ -471,7 +477,9 @@ def main():
     dp.add_handler(CommandHandler(COMMAND_STOP_NOTIFICATION, on_stop_notification))
 
     dp.add_handler(CommandHandler(COMMAND_SEARCH, on_search))
+    dp.add_handler(CommandHandler(COMMAND_FIND, on_search))
     dp.add_handler(MessageHandler(Filters.regex(PATTERN_REPLY_SEARCH), on_search))
+    dp.add_handler(MessageHandler(Filters.regex(PATTERN_REPLY_FIND), on_search))
     dp.add_handler(
         CallbackQueryHandler(on_callback_search_pagination, pattern=PATTERN_SEARCH_PAGE)
     )
