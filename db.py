@@ -6,6 +6,7 @@ __author__ = "ipetrash"
 
 import datetime as dt
 import enum
+import html
 import time
 
 from typing import Any, Type, TypeVar, Optional, Iterable
@@ -202,6 +203,7 @@ class Notification(BaseModel):
     group: NotificationGroup = ForeignKeyField(
         NotificationGroup, null=True, backref="notifications"
     )
+    need_html_escape_content = BooleanField(default=True)
 
     @classmethod
     def add(
@@ -215,6 +217,7 @@ class Notification(BaseModel):
         show_type: bool = True,
         group: NotificationGroup | str = None,
         group_max_number: int = None,
+        need_html_escape_content: bool = True,
     ) -> "Notification":
         if isinstance(url, str) and not url.strip():
             url = None
@@ -247,6 +250,7 @@ class Notification(BaseModel):
             has_delete_button=has_delete_button,
             show_type=show_type,
             group=group,
+            need_html_escape_content=need_html_escape_content,
         )
 
     @classmethod
@@ -282,13 +286,20 @@ class Notification(BaseModel):
         if self.show_type:
             text += self.type.emoji + " "
 
+        name: str = self.name
+        message: str = self.message
+
+        if self.need_html_escape_content:
+            name = html.escape(name)
+            message = html.escape(message)
+
         number_in_group: str = ""
         if self.group:
             number = self.get_index_in_group() + 1
             total = self.group.get_total_notifications()
             number_in_group = f" [{number}/{total}]"
 
-        text += f"<b>{self.name}</b>{number_in_group}\n{self.message}"
+        text += f"<b>{name}</b>{number_in_group}\n{message}"
 
         return text.strip()
 

@@ -34,6 +34,10 @@ def process_notify(data: dict):
     if group_max_number and not isinstance(group_max_number, int):
         group_max_number = int(group_max_number)
 
+    need_html_escape_content = data.get("need_html_escape_content", True)
+    if isinstance(need_html_escape_content, str):
+        need_html_escape_content = need_html_escape_content == "true"
+
     add_notify(
         name=name,
         message=message,
@@ -43,6 +47,7 @@ def process_notify(data: dict):
         show_type=show_type,
         group=group,
         group_max_number=group_max_number,
+        need_html_escape_content=need_html_escape_content,
     )
 
 
@@ -62,18 +67,26 @@ async def index(_: web.Request):
         <label for="url">Url:</label>
         <input id="url" name="url" type="url" value=""/>
     </p>
-    <p>
-        <label for="has_delete_button">Has delete button:</label>
-        <input id="has_delete_button" name="has_delete_button" type="checkbox" value="true"/>
-    </p>
+    
+    <fieldset>
+        <legend>Has delete button:</legend>
+        <div>
+            <input id="has_delete_button_true" name="has_delete_button" type="radio" value="true"/>
+            <label for="has_delete_button_true">Yes</label>
+            
+            <input id="has_delete_button_false" name="has_delete_button" type="radio" value="false" checked/>
+            <label for="has_delete_button_false">No</label>
+        </div>
+    </fieldset>
+    
     <fieldset>
         <legend>Show type:</legend>
         <div>
             <input id="show_type_true" name="show_type" type="radio" value="true" checked/>
             <label for="show_type_true">Show</label>
             
-            <input id="show_type_hide" name="show_type" type="radio" value="false"/>
-            <label for="show_type_hide">Hide</label>
+            <input id="show_type_false" name="show_type" type="radio" value="false"/>
+            <label for="show_type_false">Hide</label>
         </div>
     </fieldset>
     
@@ -88,6 +101,18 @@ async def index(_: web.Request):
             <input id="group_max_number" name="group_max_number" type="number" value=""/>
         </p>
     </fieldset>
+    
+    <fieldset>
+        <legend>Need html escape content:</legend>
+        <div>
+            <input id="need_html_escape_content_true" name="need_html_escape_content" type="radio" value="true" checked/>
+            <label for="need_html_escape_content_true">Yes</label>
+            
+            <input id="need_html_escape_content_false" name="need_html_escape_content" type="radio" value="false"/>
+            <label for="need_html_escape_content_false">No</label>
+        </div>
+    </fieldset>
+    <br/>
     
     <input type="submit"/>
     <br/>
