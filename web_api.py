@@ -4,6 +4,8 @@
 __author__ = "ipetrash"
 
 
+from typing import Any
+
 # pip install aiohttp
 from aiohttp import web
 
@@ -15,7 +17,7 @@ from common import TypeEnum
 routes = web.RouteTableDef()
 
 
-def process_notify(data: dict):
+def process_notify(data: dict[str, Any]):
     name = data["name"]
     message = data["message"]
     type = data.get("type", TypeEnum.INFO)

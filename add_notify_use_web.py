@@ -26,6 +26,12 @@ def add_notify(
     group_max_number: int = None,
     need_html_escape_content: bool = True,
 ):
+    if not name:
+        raise Exception('Аргумент "name" не задан')
+
+    if not message:
+        raise Exception('Аргумент "message" не задан')
+
     data = {
         "name": name,
         "message": message,
@@ -74,6 +80,82 @@ def test():
 
 
 if __name__ == "__main__":
-    # TODO: Поддержать argparse
-    # TODO: test вызывать при определенном флаге
-    test()
+    import argparse
+    import sys
+
+    def create_parser() -> argparse.ArgumentParser:
+        parser = argparse.ArgumentParser(
+            description="Скрипт для отправки уведомления в телеграм"
+        )
+        parser.add_argument(
+            "--name", help="Название уведомления"
+        )
+        parser.add_argument(
+            "--message", help="Текст уведомления"
+        )
+        parser.add_argument(
+            "--type",
+            type=TypeEnum,
+            choices=TypeEnum,
+            default=TypeEnum.INFO,
+            help="Тип уведомления",
+        )
+        parser.add_argument(
+            "--url", help="Ссылка в уведомлении"
+        )
+        parser.add_argument(
+            "--has-delete-button",
+            action="store_true",
+            default=False,
+            help="Добавление кнопки удаления в уведомление",
+        )
+        parser.add_argument(
+            "--show-type",
+            action=argparse.BooleanOptionalAction,
+            default=True,
+            help="Определяет нужно ли показывать иконку типа в уведомлении",
+        )
+        parser.add_argument(
+            "--group", help="Название группы для объединения уведомлений"
+        )
+        parser.add_argument(
+            "--group-max-number",
+            type=int,
+            help="Количество уведомлений в группе",
+        )
+        parser.add_argument(
+            "--need-html-escape-content",
+            action=argparse.BooleanOptionalAction,
+            default=True,
+            help="Определяет нужно ли экранировать название и текст в уведомлении как HTML",
+        )
+        parser.add_argument(
+            "--run-test",
+            action="store_true",
+            help="Флаг для отправки тестовых данных",
+        )
+        return parser
+
+    parser = create_parser()
+
+    # Если не указаны параметры, выводим справку и выходим
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit()
+
+    args = parser.parse_args()
+    if args.run_test:
+        test()
+        sys.exit()
+
+    add_notify(
+        name=args.name,
+        message=args.message,
+        type=args.type,
+        url=args.url,
+        has_delete_button=args.has_delete_button,
+        show_type=args.show_type,
+        group=args.group,
+        group_max_number=args.group_max_number,
+        need_html_escape_content=args.need_html_escape_content,
+    )
