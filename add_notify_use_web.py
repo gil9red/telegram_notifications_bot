@@ -56,7 +56,7 @@ def add_notify(
             time.sleep(timeout)
 
 
-if __name__ == "__main__":
+def test():
     add_notify("TEST", "Hello World! Привет мир!")
     add_notify("", "Hello World! Привет мир!")
     add_notify("Ошибка!", "Hello World! Привет мир!", TypeEnum.ERROR)
@@ -71,3 +71,9 @@ if __name__ == "__main__":
 
     add_notify("TEST", "#1. Group 1!", group="group 1", group_max_number=2)
     add_notify("TEST", "#2. Group 1!", group="group 1", group_max_number=2)
+
+
+if __name__ == "__main__":
+    # TODO: Поддержать argparse
+    # TODO: test вызывать при определенном флаге
+    test()
