@@ -29,7 +29,7 @@ def add_notify(
     data = {
         "name": name,
         "message": message,
-        "type": type.value,
+        "type": type if isinstance(type, str) else type.value,
         "url": url,
         "has_delete_button": has_delete_button,
         "show_type": show_type,
