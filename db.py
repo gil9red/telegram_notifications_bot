@@ -256,7 +256,7 @@ class Notification(BaseModel):
     @classmethod
     def get_unsent(cls) -> list["Notification"]:
         """
-        Функция класс, что возвращает неотправленные уведомления
+        Функция, что возвращает неотправленные уведомления
         """
 
         return list(cls.select().where(cls.sending_datetime.is_null(True)))
