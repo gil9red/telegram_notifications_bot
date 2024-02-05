@@ -19,6 +19,7 @@ USER_ID: int | None = None
 try:
     USER_ID = int(os.environ.get("USER_ID") or USER_ID_PATH.read_text("utf-8").strip())
 except:
+    # Отсутствие значения учитывается в функциях отправки и при работе бота
     pass
 
 # Создание папки для базы данных
@@ -28,8 +29,15 @@ DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
 # Путь к файлу базы данных
 DB_FILE_NAME = str(DB_DIR_NAME / "database.sqlite")
 
-HOST = "127.0.0.1"
-PORT = 10016
+# Example: "127.0.0.1:10016"
+ADDRESS_PATH = DIR / "ADDRESS.txt"
+try:
+    ADDRESS = os.environ.get("ADDRESS") or ADDRESS_PATH.read_text("utf-8").strip()
+    HOST, PORT = ADDRESS.split(":")
+    PORT = int(PORT)
+except:
+    HOST: str = "127.0.0.1"
+    PORT: int = 10016
 
 MESS_MAX_LENGTH = 4096
 
