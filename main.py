@@ -394,10 +394,22 @@ def on_callback_search_pagination(update: Update, context: CallbackContext):
 @log_func(log)
 def on_callback_delete_message(update: Update, _: CallbackContext):
     query = update.callback_query
-    if query:
-        query.answer()
 
-    query.delete_message()
+    try:
+        query.delete_message()
+    except BadRequest as e:
+        if "Message can't be deleted for everyone" in str(e):
+            text = "Нельзя удалить сообщение, т.к. оно слишком старое. Остается только вручную его удалить"
+        else:
+            text = f"При попытке удаления сообщения возникла ошибка: {str(e)!r}"
+
+        query.answer(
+            text=text,
+            show_alert=True,
+        )
+        return
+
+    query.answer()
 
 
 @log_func(log)
