@@ -51,14 +51,12 @@ def get_logger(file_name: str, dir_name="logs"):
         file_name, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
     )
     fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
 
     ch = logging.StreamHandler(stream=sys.stdout)
     ch.setLevel(logging.DEBUG)
-
-    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
-
-    log.addHandler(fh)
     log.addHandler(ch)
 
     return log
