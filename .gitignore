@@ -132,3 +132,4 @@ dmypy.json
 make_requirements.bat
 CHAT_ID.txt
 TOKEN.txt
+logs/
