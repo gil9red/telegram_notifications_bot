@@ -59,11 +59,14 @@ class EnumField(CharField):
         self.max_length: int = 255
 
     def db_value(self, value: Any) -> Any:
+        if value is None:
+            return
+
         return value.value
 
     def python_value(self, value: Any) -> Any:
         if value is None:
-            return value
+            return
 
         type_value_enum = type(list(self.choices)[0].value)
         value_enum = type_value_enum(value)
