@@ -8,7 +8,10 @@ import os
 import time
 import re
 
+from datetime import datetime
 from threading import Thread
+
+from peewee import fn, SQL
 
 # pip install python-telegram-bot
 from telegram import Update, Bot, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
@@ -49,7 +52,7 @@ from regexp_patterns import (
     PATTERN_DELETE_MESSAGE,
     COMMAND_START,
     COMMAND_HELP,
-    COMMAND_SHOW_NOTIFICATION_COUNT,
+    COMMAND_STATS,
     COMMAND_START_NOTIFICATION,
     COMMAND_STOP_NOTIFICATION,
     COMMAND_SEARCH,
@@ -262,7 +265,7 @@ def on_start(update: Update, _: CallbackContext):
     elif is_admin(user_id):
         lines = (
             "Команды:",
-            f" * /{COMMAND_SHOW_NOTIFICATION_COUNT} для просмотра количества отправленных уведомлений",
+            f" * /{COMMAND_STATS} для просмотра статистики",
             f" * /{COMMAND_STOP_NOTIFICATION} для остановки рассылки уведомлений",
             f" * /{COMMAND_START_NOTIFICATION} для возобновления рассылки уведомлений",
             (
@@ -280,13 +283,54 @@ def on_start(update: Update, _: CallbackContext):
 
 @log_func(log)
 @access_check(log)
-def on_show_notification_count(update: Update, _: CallbackContext):
+def on_stats(update: Update, _: CallbackContext):
     message = update.effective_message
     chat_id = get_user_id(update)
-    count = db.Notification.select().where(db.Notification.chat_id == chat_id).count()
+
+    filters = [db.Notification.chat_id == chat_id]
+    count: int = db.Notification.select().where(*filters).count()
+    first_append_datetime: datetime = (
+        db.Notification
+        .select(db.Notification.append_datetime)
+        .where(*filters)
+        .order_by(db.Notification.append_datetime)
+        .first()
+        .append_datetime
+    )
+    last_append_datetime: datetime = (
+        db.Notification
+        .select(db.Notification.append_datetime)
+        .where(*filters)
+        .order_by(db.Notification.append_datetime.desc())
+        .first()
+        .append_datetime
+    )
+
+    query_year_by_number = (
+        db.Notification.select(
+            fn.STRFTIME("%Y", db.Notification.append_datetime).alias("year"),
+            fn.COUNT(db.Notification.id),
+        )
+        .where(*filters)
+        .group_by(SQL("year"))
+        .order_by(SQL("year").desc())
+    )
+    years_info: str = "\n".join(
+        f"    <b>{year}</b>: {number}"
+        for year, number in query_year_by_number.tuples()
+    )
+
+    text = f"""
+{TypeEnum.INFO.emoji} <b>Статистика уведомлений</b>
+<b>Отправлено</b>: {count}
+{years_info}
+<b>Первое</b>: {first_append_datetime:%d/%m/%Y %H:%M:%S}
+<b>Последнее</b>: {last_append_datetime:%d/%m/%Y %H:%M:%S}
+    """.strip()
 
     message.reply_text(
-        f"{TypeEnum.INFO.emoji} Отправлено уведомлений: {count}",
+        text,
+        parse_mode=ParseMode.HTML,
         quote=True,
     )
 
@@ -482,7 +526,7 @@ def main():
     dp.add_handler(CommandHandler(COMMAND_HELP, on_start))
 
     dp.add_handler(
-        CommandHandler(COMMAND_SHOW_NOTIFICATION_COUNT, on_show_notification_count)
+        CommandHandler(COMMAND_STATS, on_stats)
     )
 
     dp.add_handler(CommandHandler(COMMAND_START_NOTIFICATION, on_start_notification))

@@ -17,7 +17,7 @@ PATTERN_DELETE_MESSAGE = "delete_message"
 COMMAND_START = "start"
 COMMAND_HELP = "help"
 
-COMMAND_SHOW_NOTIFICATION_COUNT = "show_notification_count"
+COMMAND_STATS = "stats"
 
 COMMAND_START_NOTIFICATION = "start_notification"
 COMMAND_STOP_NOTIFICATION = "stop_notification"
