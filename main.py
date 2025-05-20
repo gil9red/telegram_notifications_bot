@@ -65,6 +65,10 @@ from third_party.telegram_bot_pagination import InlineKeyboardPaginator
 from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
 
 
+def datetime_to_str(dt: datetime) -> str:
+    return f"{dt:%d.%m.%Y %H:%M:%S}"
+
+
 def get_int_from_match(match: re.Match, name: str, default: int = None) -> int:
     try:
         return int(match[name])
@@ -164,7 +168,7 @@ def send_notify(
     text = notify.get_html()
 
     if add_sending_datetime and notify.sending_datetime:
-        text += f"\n\n{notify.sending_datetime:%d/%m/%Y %H:%M:%S}"
+        text += f"\n\n{datetime_to_str(notify.sending_datetime)}"
 
     if len(text) > MESS_MAX_LENGTH:
         text = text[: MESS_MAX_LENGTH - 3] + "..."
@@ -324,8 +328,8 @@ def on_stats(update: Update, _: CallbackContext):
 {TypeEnum.INFO.emoji} <b>Статистика уведомлений</b>
 <b>Отправлено</b>: {count}
 {years_info}
-<b>Первое</b>: {first_append_datetime:%d/%m/%Y %H:%M:%S}
-<b>Последнее</b>: {last_append_datetime:%d/%m/%Y %H:%M:%S}
+<b>Первое</b>: {datetime_to_str(first_append_datetime)}
+<b>Последнее</b>: {datetime_to_str(last_append_datetime)}
     """.strip()
 
     message.reply_text(
