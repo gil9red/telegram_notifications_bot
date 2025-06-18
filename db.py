@@ -52,7 +52,7 @@ class EnumField(CharField):
     This class enable an Enum like field for Peewee
     """
 
-    def __init__(self, choices: Type[enum.Enum], *args: Any, **kwargs: Any) -> None:
+    def __init__(self, choices: Type[enum.Enum], *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
         self.choices: Type[enum.Enum] = choices
@@ -357,7 +357,7 @@ time.sleep(0.050)
 
 if __name__ == "__main__":
     BaseModel.print_count_of_tables()
-    # Notification: 2593
+    # Notification: 7684, NotificationGroup: 444, Search: 40
 
     print()
 
