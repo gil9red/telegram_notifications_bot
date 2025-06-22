@@ -197,6 +197,7 @@ def sending_notifications():
     while True:
         bot: Bot | None = DATA["BOT"]
         if not bot or not USER_ID:
+            time.sleep(0.001)
             continue
 
         try:
