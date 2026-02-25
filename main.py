@@ -164,7 +164,7 @@ def send_notify(
     message_id: int = None,
     reply_to_message_id: int = None,
     add_sending_datetime: bool = False,
-):
+) -> None:
     text = notify.get_html()
 
     if add_sending_datetime and notify.sending_datetime:
@@ -193,7 +193,7 @@ def send_notify(
         )
 
 
-def sending_notifications():
+def sending_notifications() -> None:
     while True:
         bot: Bot | None = DATA["BOT"]
         if not bot or not USER_ID:
@@ -252,7 +252,7 @@ def sending_notifications():
             time.sleep(1)
 
 
-def reply_sending_notification_status(update: Update):
+def reply_sending_notification_status(update: Update) -> None:
     text = (
         f"Рассылка уведомлений: <b>"
         + ("запущена" if DATA["IS_WORKING"] else "остановлена")
@@ -262,7 +262,7 @@ def reply_sending_notification_status(update: Update):
 
 
 @log_func(log)
-def on_start(update: Update, _: CallbackContext):
+def on_start(update: Update, _: CallbackContext) -> None:
     user_id = get_user_id(update)
 
     if not USER_ID:
@@ -288,7 +288,7 @@ def on_start(update: Update, _: CallbackContext):
 
 @log_func(log)
 @access_check(log)
-def on_stats(update: Update, _: CallbackContext):
+def on_stats(update: Update, _: CallbackContext) -> None:
     message = update.effective_message
     chat_id = get_user_id(update)
 
@@ -342,21 +342,21 @@ def on_stats(update: Update, _: CallbackContext):
 
 @log_func(log)
 @access_check(log)
-def on_start_notification(update: Update, _: CallbackContext):
+def on_start_notification(update: Update, _: CallbackContext) -> None:
     DATA["IS_WORKING"] = True
     reply_sending_notification_status(update)
 
 
 @log_func(log)
 @access_check(log)
-def on_stop_notification(update: Update, _: CallbackContext):
+def on_stop_notification(update: Update, _: CallbackContext) -> None:
     DATA["IS_WORKING"] = False
     reply_sending_notification_status(update)
 
 
 @log_func(log)
 @access_check(log)
-def on_search(update: Update, context: CallbackContext):
+def on_search(update: Update, context: CallbackContext) -> None:
     message = update.effective_message
 
     text = get_context_value(context)
@@ -441,7 +441,7 @@ def on_callback_search_pagination(update: Update, context: CallbackContext):
 
 
 @log_func(log)
-def on_callback_delete_message(update: Update, _: CallbackContext):
+def on_callback_delete_message(update: Update, _: CallbackContext) -> None:
     query = update.callback_query
 
     try:
@@ -498,16 +498,16 @@ def on_change_notification_page(update: Update, context: CallbackContext):
 
 @log_func(log)
 @access_check(log)
-def on_request(update: Update, _: CallbackContext):
+def on_request(update: Update, _: CallbackContext) -> None:
     message = update.effective_message
     message.reply_text(MESSAGE_UNKNOWN_COMMAND)
 
 
-def on_error(update: Update, context: CallbackContext):
+def on_error(update: Update, context: CallbackContext) -> None:
     reply_error(log, update, context)
 
 
-def main():
+def main() -> None:
     log.debug("Start")
 
     cpu_count = os.cpu_count()

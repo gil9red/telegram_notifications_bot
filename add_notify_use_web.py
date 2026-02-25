@@ -62,7 +62,7 @@ def add_notify(
             time.sleep(timeout)
 
 
-def test():
+def test() -> None:
     add_notify("TEST", "Hello World! Привет мир!")
     add_notify("", "Hello World! Привет мир!")
     add_notify("Ошибка!", "Hello World! Привет мир!", TypeEnum.ERROR)

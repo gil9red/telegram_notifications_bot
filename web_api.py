@@ -17,7 +17,7 @@ from common import TypeEnum
 routes = web.RouteTableDef()
 
 
-def process_notify(data: dict[str, Any]):
+def process_notify(data: dict[str, Any]) -> None:
     name = data["name"]
     message = data["message"]
     type = data.get("type", TypeEnum.INFO)

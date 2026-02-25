@@ -52,7 +52,7 @@ class EnumField(CharField):
     This class enable an Enum like field for Peewee
     """
 
-    def __init__(self, choices: Type[enum.Enum], *args: Any, **kwargs: Any):
+    def __init__(self, choices: Type[enum.Enum], *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.choices: Type[enum.Enum] = choices
@@ -85,7 +85,7 @@ class BaseModel(Model):
         return sorted(cls.__subclasses__(), key=lambda x: x.__name__)
 
     @classmethod
-    def print_count_of_tables(cls):
+    def print_count_of_tables(cls) -> None:
         items = []
         for sub_cls in cls.get_inherited_models():
             name = sub_cls.__name__
@@ -113,7 +113,7 @@ class BaseModel(Model):
         query = query.paginate(page, items_per_page)
         return list(query)
 
-    def __str__(self):
+    def __str__(self) -> str:
         fields = []
         for k, field in self._meta.fields.items():
             v = getattr(self, k)
@@ -267,7 +267,7 @@ class Notification(BaseModel):
 
         return list(cls.select().where(cls.sending_datetime.is_null(True)))
 
-    def set_as_send(self):
+    def set_as_send(self) -> None:
         """
         Функция устанавливает дату отправки и сохраняет ее
         """

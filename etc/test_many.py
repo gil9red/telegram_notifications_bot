@@ -14,7 +14,7 @@ from multiprocessing.dummy import Pool
 import test_one
 
 
-def run(i):
+def run(i) -> None:
     # Random delay 5-10 ms
     delay = random.randint(5, 10) / 1000
     time.sleep(delay)

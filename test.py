@@ -23,7 +23,7 @@ class TestRegexpPatterns(unittest.TestCase):
     MAX_ID = 999_999_999_999
     MAX_DATA_SIZE = 64
 
-    def do_check_callback_data_value(self, pattern, *args):
+    def do_check_callback_data_value(self, pattern, *args) -> None:
         callback_data_value = P.fill_string_pattern(pattern, *args)
 
         size_callback_data = len(bytes(callback_data_value, "utf-8"))
@@ -33,7 +33,7 @@ class TestRegexpPatterns(unittest.TestCase):
             f"Превышение размера callback_data для {pattern}. Размер: {size_callback_data}",
         )
 
-    def test_pattern_authors_page(self):
+    def test_pattern_authors_page(self) -> None:
         with self.subTest("Nulls"):
             self.assertEqual(
                 "notify page=1 group#None",
@@ -45,7 +45,7 @@ class TestRegexpPatterns(unittest.TestCase):
                 P.PATTERN_NOTIFICATION_PAGE, self.MAX_PAGE, self.MAX_ID
             )
 
-    def test_pattern_search_page(self):
+    def test_pattern_search_page(self) -> None:
         self.assertEqual(
             "notify search=1 page=1",
             P.fill_string_pattern(P.PATTERN_SEARCH_PAGE, 1, 1),
@@ -57,14 +57,14 @@ class TestRegexpPatterns(unittest.TestCase):
 
 
 class TestDbNotificationGroup(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = [NotificationGroup, Notification]
         self.test_db = SqliteDatabase(":memory:")
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
-    def test_add(self):
+    def test_add(self) -> None:
         with self.subTest("Ok"):
             name = "test group 1"
             max_number = 2
@@ -91,7 +91,7 @@ class TestDbNotificationGroup(unittest.TestCase):
             with self.assertRaises(Exception):
                 NotificationGroup.add(name="test group 404", max_number=0)
 
-    def test_get_by(self):
+    def test_get_by(self) -> None:
         name = "test group 1"
 
         self.assertIsNone(NotificationGroup.get_by(name=name))
@@ -100,7 +100,7 @@ class TestDbNotificationGroup(unittest.TestCase):
 
         self.assertEqual(group, NotificationGroup.get_by(name=name))
 
-    def test_get_total_notifications(self):
+    def test_get_total_notifications(self) -> None:
         group = NotificationGroup.add(name="test group 1", max_number=10)
 
         notifications = [
@@ -114,7 +114,7 @@ class TestDbNotificationGroup(unittest.TestCase):
         ]
         self.assertEqual(len(notifications), group.get_total_notifications())
 
-    def test_is_complete(self):
+    def test_is_complete(self) -> None:
         group = NotificationGroup.add(name="test group 1", max_number=10)
         self.assertFalse(group.is_complete())
 
@@ -136,7 +136,7 @@ class TestDbNotificationGroup(unittest.TestCase):
             )
         self.assertTrue(group.is_complete())
 
-    def test_get_notification(self):
+    def test_get_notification(self) -> None:
         group = NotificationGroup.add(name="test group 1", max_number=10)
 
         notifications = [
@@ -153,14 +153,14 @@ class TestDbNotificationGroup(unittest.TestCase):
 
 
 class TestDbNotification(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = [NotificationGroup, Notification, Search]
         self.test_db = SqliteExtDatabase(":memory:", regexp_function=True)
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
-    def test_add(self):
+    def test_add(self) -> None:
         chat_id = 123
         name = "test"
         message = "message 1"
@@ -239,7 +239,7 @@ class TestDbNotification(unittest.TestCase):
                         group_max_number=group_max_number,
                     )
 
-    def test_get_unsent(self):
+    def test_get_unsent(self) -> None:
         chat_id = 123
         name = "test"
         message = "message 1"
@@ -254,7 +254,7 @@ class TestDbNotification(unittest.TestCase):
         ]
         self.assertEqual(items, Notification.get_unsent())
 
-    def test_set_as_send(self):
+    def test_set_as_send(self) -> None:
         chat_id = 123
         name = "test"
         message = "message 1"
@@ -274,7 +274,7 @@ class TestDbNotification(unittest.TestCase):
 
         self.assertFalse(Notification.get_unsent())
 
-    def test_get_index_in_group(self):
+    def test_get_index_in_group(self) -> None:
         with self.subTest("Ok"):
             group = NotificationGroup.add(name="test group 1", max_number=10)
 
@@ -299,7 +299,7 @@ class TestDbNotification(unittest.TestCase):
             )
             self.assertEqual(-1, notify.get_index_in_group())
 
-    def test_get_html(self):
+    def test_get_html(self) -> None:
         chat_id = 123
         name = "test"
         message = "message 1"
@@ -330,7 +330,7 @@ class TestDbNotification(unittest.TestCase):
             self.assertIn(notify.name, text)
             self.assertIn(notify.message, text)
 
-    def test_is_first_in_group(self):
+    def test_is_first_in_group(self) -> None:
         chat_id = 123
         name = "test"
         message = "message 1"
@@ -359,7 +359,7 @@ class TestDbNotification(unittest.TestCase):
         )
         self.assertFalse(notify_without_group.is_first_in_group())
 
-    def test_search(self):
+    def test_search(self) -> None:
         text_en = "Hel.+rld"
         self.assertIsNone(Search.get_by(text_en))
 
@@ -381,7 +381,7 @@ class TestDbNotification(unittest.TestCase):
                 search = Search.get_by(text)
                 self.assertIsNotNone(search)
 
-    def test_get_by_search(self):
+    def test_get_by_search(self) -> None:
         with self.subTest("Not found"):
             search, ids = Notification.search("NOT FOUND")
             self.assertIsNone(search)
@@ -419,14 +419,14 @@ class TestDbNotification(unittest.TestCase):
 
 
 class TestDbSearch(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = [Search]
         self.test_db = SqliteDatabase(":memory:")
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
-    def test_add(self):
+    def test_add(self) -> None:
         text = "Hello World!"
         search1 = Search.add(text=text)
         self.assertIsNotNone(search1)
@@ -436,7 +436,7 @@ class TestDbSearch(unittest.TestCase):
 
         self.assertEqual(search1, search2)
 
-    def test_get_by(self):
+    def test_get_by(self) -> None:
         text = "Hello World!"
         self.assertIsNone(Search.get_by(text=text))
 
