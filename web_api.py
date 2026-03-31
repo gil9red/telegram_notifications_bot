@@ -63,7 +63,10 @@ async def index(_: web.Request):
     <p/>
     <p>
         <label for="message">Message:</label>
-        <input id="message" name="message" type="text" value="BUGAGA! Привет мир!"/>
+        <textarea id="message" name="message" type="text">
+BUGAGA!
+Привет мир!
+        </textarea>
     </p>
     <p>
         <label for="url">Url:</label>
