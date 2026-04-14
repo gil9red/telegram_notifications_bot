@@ -8,13 +8,12 @@ import os
 
 from pathlib import Path
 
+DIR: Path = Path(__file__).resolve().parent
 
-DIR = Path(__file__).resolve().parent
+TOKEN_PATH: Path = DIR / "TOKEN.txt"
+TOKEN: str = os.environ.get("TOKEN") or TOKEN_PATH.read_text("utf-8").strip()
 
-TOKEN_PATH = DIR / "TOKEN.txt"
-TOKEN = os.environ.get("TOKEN") or TOKEN_PATH.read_text("utf-8").strip()
-
-USER_ID_PATH = DIR / "USER_ID.txt"
+USER_ID_PATH: Path = DIR / "USER_ID.txt"
 USER_ID: int | None = None
 try:
     USER_ID = int(os.environ.get("USER_ID") or USER_ID_PATH.read_text("utf-8").strip())
@@ -23,14 +22,14 @@ except:
     pass
 
 # Создание папки для базы данных
-DB_DIR_NAME = DIR / "database"
+DB_DIR_NAME: Path = DIR / "database"
 DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
 
 # Путь к файлу базы данных
-DB_FILE_NAME = str(DB_DIR_NAME / "database.sqlite")
+DB_FILE_NAME: str = str(DB_DIR_NAME / "database.sqlite")
 
 # Example: "127.0.0.1:10016"
-ADDRESS_PATH = DIR / "ADDRESS.txt"
+ADDRESS_PATH: Path = DIR / "ADDRESS.txt"
 try:
     ADDRESS = os.environ.get("ADDRESS") or ADDRESS_PATH.read_text("utf-8").strip()
     HOST, PORT = ADDRESS.split(":")
@@ -39,7 +38,7 @@ except:
     HOST: str = "127.0.0.1"
     PORT: int = 10016
 
-MESS_MAX_LENGTH = 4096
+MESS_MAX_LENGTH: int = 4096
 
 INLINE_BUTTON_TEXT_URL = "🔗 Открыть ссылку"
 INLINE_BUTTON_TEXT_DELETE = "❌ Удалить"
