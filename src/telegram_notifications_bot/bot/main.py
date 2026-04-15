@@ -26,9 +26,9 @@ from telegram.ext import (
 )
 from telegram.error import BadRequest
 
-import db
+from telegram_notifications_bot import db
 
-from config import (
+from telegram_notifications_bot.config import (
     MESS_MAX_LENGTH,
     INLINE_BUTTON_TEXT_URL,
     INLINE_BUTTON_TEXT_DELETE,
@@ -37,7 +37,7 @@ from config import (
     USER_ID,
     TOKEN,
 )
-from common import (
+from telegram_notifications_bot.common import (
     get_logger,
     log_func,
     access_check,
@@ -46,7 +46,7 @@ from common import (
     get_user_id,
     is_admin,
 )
-from regexp_patterns import (
+from telegram_notifications_bot.bot.regexp_patterns import (
     fill_string_pattern,
     PATTERN_NOTIFICATION_PAGE,
     PATTERN_DELETE_MESSAGE,
@@ -61,8 +61,12 @@ from regexp_patterns import (
     COMMAND_FIND,
     PATTERN_REPLY_FIND,
 )
-from third_party.telegram_bot_pagination import InlineKeyboardPaginator
-from third_party.is_equal_inline_keyboards import is_equal_inline_keyboards
+from telegram_notifications_bot.third_party.telegram_bot_pagination import (
+    InlineKeyboardPaginator,
+)
+from telegram_notifications_bot.third_party.is_equal_inline_keyboards import (
+    is_equal_inline_keyboards,
+)
 
 
 def datetime_to_str(dt: datetime) -> str:
@@ -295,16 +299,14 @@ def on_stats(update: Update, _: CallbackContext) -> None:
     filters = [db.Notification.chat_id == chat_id]
     count: int = db.Notification.select().where(*filters).count()
     first_append_datetime: datetime = (
-        db.Notification
-        .select(db.Notification.append_datetime)
+        db.Notification.select(db.Notification.append_datetime)
         .where(*filters)
         .order_by(db.Notification.append_datetime)
         .first()
         .append_datetime
     )
     last_append_datetime: datetime = (
-        db.Notification
-        .select(db.Notification.append_datetime)
+        db.Notification.select(db.Notification.append_datetime)
         .where(*filters)
         .order_by(db.Notification.append_datetime.desc())
         .first()
@@ -321,8 +323,7 @@ def on_stats(update: Update, _: CallbackContext) -> None:
         .order_by(SQL("year").desc())
     )
     years_info: str = "\n".join(
-        f"    <b>{year}</b>: {number}"
-        for year, number in query_year_by_number.tuples()
+        f"    <b>{year}</b>: {number}" for year, number in query_year_by_number.tuples()
     )
 
     text = f"""
@@ -530,9 +531,7 @@ def main() -> None:
     dp.add_handler(CommandHandler(COMMAND_START, on_start))
     dp.add_handler(CommandHandler(COMMAND_HELP, on_start))
 
-    dp.add_handler(
-        CommandHandler(COMMAND_STATS, on_stats)
-    )
+    dp.add_handler(CommandHandler(COMMAND_STATS, on_stats))
 
     dp.add_handler(CommandHandler(COMMAND_START_NOTIFICATION, on_start_notification))
     dp.add_handler(CommandHandler(COMMAND_STOP_NOTIFICATION, on_stop_notification))

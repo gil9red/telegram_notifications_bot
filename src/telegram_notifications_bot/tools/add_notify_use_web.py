@@ -8,9 +8,8 @@ import time
 
 import requests
 
-from common import TypeEnum
-from config import HOST, PORT
-
+from telegram_notifications_bot.common import TypeEnum
+from telegram_notifications_bot.config import HOST, PORT
 
 URL = f"http://{HOST}:{PORT}/add_notify"
 
@@ -87,12 +86,8 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(
             description="Скрипт для отправки уведомления в телеграм"
         )
-        parser.add_argument(
-            "--name", help="Название уведомления"
-        )
-        parser.add_argument(
-            "--message", help="Текст уведомления"
-        )
+        parser.add_argument("--name", help="Название уведомления")
+        parser.add_argument("--message", help="Текст уведомления")
         parser.add_argument(
             "--type",
             type=TypeEnum,
@@ -100,9 +95,7 @@ if __name__ == "__main__":
             default=TypeEnum.INFO,
             help="Тип уведомления",
         )
-        parser.add_argument(
-            "--url", help="Ссылка в уведомлении"
-        )
+        parser.add_argument("--url", help="Ссылка в уведомлении")
         parser.add_argument(
             "--has-delete-button",
             action="store_true",

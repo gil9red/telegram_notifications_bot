@@ -6,8 +6,7 @@ __author__ = "ipetrash"
 
 import re
 
-from third_party.regexp import fill_string_pattern
-
+from telegram_notifications_bot.third_party.regexp import fill_string_pattern
 
 PATTERN_NOTIFICATION_PAGE = re.compile(
     r"^notify page=(?P<page>\d+) group#(?P<group_id>\d*)$"

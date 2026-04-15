@@ -9,13 +9,12 @@ import unittest
 from peewee import SqliteDatabase
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-import regexp_patterns as P
+from telegram_notifications_bot.bot import regexp_patterns as P
 
-from common import TypeEnum
-from db import NotificationGroup, Notification, Search
+from telegram_notifications_bot.common import TypeEnum
+from telegram_notifications_bot.db import NotificationGroup, Notification, Search
 
-
-DEBUG = False
+DEBUG: bool = False
 
 
 class TestRegexpPatterns(unittest.TestCase):

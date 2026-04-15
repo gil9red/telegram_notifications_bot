@@ -9,10 +9,9 @@ from typing import Any
 # pip install aiohttp
 from aiohttp import web
 
-from add_notify import add_notify
-from config import HOST, PORT
-from common import TypeEnum
-
+from telegram_notifications_bot.tools.add_notify import add_notify
+from telegram_notifications_bot.config import HOST, PORT
+from telegram_notifications_bot.common import TypeEnum
 
 routes = web.RouteTableDef()
 
@@ -23,12 +22,12 @@ def process_notify(data: dict[str, Any]) -> None:
     type = data.get("type", TypeEnum.INFO)
     url = data.get("url")
 
-    has_delete_button = data.get("has_delete_button", False)  # Из json поле будет булевым
-    if isinstance(has_delete_button, str):
+    has_delete_button = data.get("has_delete_button", False)
+    if isinstance(has_delete_button, str):  # Из json поле будет булевым
         has_delete_button = has_delete_button == "true"
 
-    show_type = data.get("show_type", True)  # Из json поле будет булевым
-    if isinstance(show_type, str):
+    show_type = data.get("show_type", True)
+    if isinstance(show_type, str):  # Из json поле будет булевым
         show_type = show_type == "true"
 
     group = data.get("group")

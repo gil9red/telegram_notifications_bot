@@ -14,7 +14,7 @@ from playhouse.migrate import (
     TextField,
     migrate,
 )
-from config import DB_FILE_NAME
+from telegram_notifications_bot.config import DB_FILE_NAME
 
 
 db = SqliteDatabase(DB_FILE_NAME)

@@ -4,9 +4,9 @@
 __author__ = "ipetrash"
 
 
-from db import Notification
-from config import USER_ID, USER_ID_PATH
-from common import TypeEnum
+from telegram_notifications_bot.db import Notification
+from telegram_notifications_bot.config import USER_ID, USER_ID_PATH
+from telegram_notifications_bot.common import TypeEnum
 
 
 def add_notify(
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         has_delete_button=True,
     )
 
-    from db import NotificationGroup
+    from telegram_notifications_bot.db import NotificationGroup
 
     group_1 = NotificationGroup.add("group 1", max_number=2)
     for notify in group_1.notifications:

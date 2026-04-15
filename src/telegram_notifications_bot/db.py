@@ -24,11 +24,9 @@ from peewee import (
 )
 from playhouse.sqliteq import SqliteQueueDatabase
 
-from config import DB_FILE_NAME
-from common import TypeEnum
-
-from third_party.shorten import shorten
-
+from telegram_notifications_bot.config import DB_FILE_NAME
+from telegram_notifications_bot.common import TypeEnum
+from telegram_notifications_bot.third_party.shorten import shorten
 
 # This working with multithreading
 # SOURCE: http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#sqliteq

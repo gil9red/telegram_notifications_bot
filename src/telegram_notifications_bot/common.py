@@ -14,7 +14,7 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import CallbackContext
 
-import config
+from telegram_notifications_bot import config
 
 
 class AutoName(enum.Enum):
@@ -68,7 +68,9 @@ def log_func(log: logging.Logger):
         @functools.wraps(func)
         def wrapper(update: Update, context: CallbackContext):
             if update:
-                chat_id = user_id = first_name = last_name = username = language_code = None
+                chat_id = user_id = first_name = last_name = username = (
+                    language_code
+                ) = None
 
                 if update.effective_chat:
                     chat_id = update.effective_chat.id
